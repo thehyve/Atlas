@@ -282,7 +282,7 @@ define([
 				cumulativeData.forEach(function (d) {
 					d.xValue = d.xValue / 365.25;
 				});
-				cumulativeObservationXLabel = 'Years';
+				cumulativeObservationXLabel = 'Length of observation period (Years)';
 			}
 
 			cumulativeObservationLine.render(cumulativeData, "#reportDashboard #cumulativeobservation", 550, 300, {
