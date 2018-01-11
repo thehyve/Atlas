@@ -916,6 +916,34 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				});
 			}
 
+            self.exportToNotebook = function (element) {
+				var exportSuccess = exportToNotebook($('#estimation-r-code').text(), self.cohortComparison().name());
+
+				console.log($('#estimation-r-code').text());
+
+				if (exportSuccess) {
+					// TODO: create custom message (with used filename)
+                    $('#exportToNotebookMessage').fadeIn();
+				} else {
+                    console.log('Error creating theJupyter notebook file');
+				}
+            };
+
+			// TODO: create JS class that exports a notebook
+			var exportToNotebook = function (rScript, outFilename) {
+				var notebookJSON = convertToNotebook(rScript);
+
+                // TODO
+				console.log("TBD Will write to: " + outFilename + '.ipynb');
+
+				return true;
+			};
+
+			var convertToNotebook = function (rScript) {
+				// TODO
+				return '{' + rScript + '}';
+			};
+
 			self.newCohortComparison = function () {
 				self.cohortComparison(new ComparativeCohortAnalysis());
 				// The ComparativeCohortAnalysis module is pretty big - use the setTimeout({}, 0) 
