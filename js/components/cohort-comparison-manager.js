@@ -4,10 +4,12 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				'cohortbuilder/CohortDefinition', 'vocabularyprovider',
 				'conceptsetbuilder/InputTypes/ConceptSet',
 				'nvd3', 'databindings/d3ChartBinding',
-				'css!./styles/nv.d3.min.css'],
+				'css!./styles/nv.d3.min.css',
+        		'jupyter/RNotebookExport',
+				'databindings/d3ChartBinding'],
 	function ($, ko, view, _, clipboard, cohortDefinitionAPI, config, ohdsiUtil,
 		ComparativeCohortAnalysis, options, CohortDefinition, vocabularyAPI,
-		ConceptSet) {
+		ConceptSet, RNotebookExport) {
 		function cohortComparisonManager(params) {
 
 			var DEBUG = true;
@@ -917,32 +919,39 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				});
 			}
 
-            self.exportToNotebook = function (element) {
-				var exportSuccess = exportToNotebook($('#estimation-r-code').text(), self.cohortComparison().name());
+			self.exportToNotebook = function (element) {
+				var exporter = new RNotebookExport();
+				var notebookJson = exporter.createNotebook($('#estimation-r-code').text());
 
-				console.log($('#estimation-r-code').text());
+				var timestamp = (new Date()).toJSON();
 
-				if (exportSuccess) {
-					// TODO: create custom message (with used filename)
+				var filename = self.cohortComparison().comparatorId() + "_" + self.cohortComparison().name() + "_" + timestamp + ".ipynb";
+
+				var settings = {
+					"async": true,
+					"crossDomain": true,
+					"url": "http://localhost:8888/api/contents/" + filename + "?token=14108e7afee8b283e2a3e2145bd5a015ef7b6e4419c52b85",
+					"method": "PUT",
+					"headers": {
+
+					},
+					"data": JSON.stringify({content : notebookJson})
+				};
+
+				// TODO: put file in separate Atlas folder and create if not exists
+				// TODO: some simple versioning instead of timestamp
+
+				$.ajax(settings).done(function (response) {
+					// TODO: error management. And check if file already exists (will throw error)
+					// console.log(response);
+				});
+
+				if (exporter.exportSuccess) {
+					// TODO: create custom message (with actual filename)
                     $('#exportToNotebookMessage').fadeIn();
 				} else {
-                    console.log('Error creating theJupyter notebook file');
+                    console.log('Error writing the Jupyter notebook file to xxx');
 				}
-            };
-
-			// TODO: create JS class that exports a notebook
-			var exportToNotebook = function (rScript, outFilename) {
-				var notebookJSON = convertToNotebook(rScript);
-
-                // TODO
-				console.log("TBD Will write to: " + outFilename + '.ipynb');
-
-				return true;
-			};
-
-			var convertToNotebook = function (rScript) {
-				// TODO
-				return '{' + rScript + '}';
 			};
 
 			self.newCohortComparison = function () {
