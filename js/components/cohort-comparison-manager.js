@@ -924,6 +924,7 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
                 rCodeRaw = rCodeRaw.replace(/true/g, 'TRUE').replace(/false/g, 'FALSE');
 
                 // TODO: replace also databasename, cdm schema, results schema, cohort table
+				// TODO: replace save to file by display inline
 
 				var notebookJson = exporter.createNotebook(rCodeRaw);
 
@@ -954,12 +955,11 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 					// console.log(response);
 				});
 
-				if (exporter.exportSuccess) {
-					// TODO: create custom message (with actual filename)
-                    $('#exportToNotebookMessage').fadeIn();
-				} else {
-                    console.log('Error writing the Jupyter notebook file to xxx');
-				}
+				// if (exporter.exportSuccess) {
+                 //    $('#exportToNotebookMessage').fadeIn();
+				// } else {
+                 //    console.log('Error writing the Jupyter notebook file to xxx');
+				// }
 			};
 
 			self.newCohortComparison = function () {
