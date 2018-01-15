@@ -921,12 +921,18 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 
 			self.exportToNotebook = function (element) {
 				var exporter = new RNotebookExport();
-				var notebookJson = exporter.createNotebook($('#estimation-r-code').text());
+                var rCodeRaw = $('#estimation-r-code').text();
+                // R code transform
+                rCodeRaw = rCodeRaw.replace(/true/g, 'TRUE').replace(/false/g, 'FALSE');
+
+                // TODO: replace also databasename, cdm schema, results schema, cohort table
+
+				var notebookJson = exporter.createNotebook(rCodeRaw);
 
 				// Create filename as id_studyname_timestamp.ipynb
 				var timestamp = (new Date()).toJSON();
 				var filename = self.cohortComparison().comparatorId() + "_" + self.cohortComparison().name() + "_" + timestamp + ".ipynb";
-				filename = filename.replace(' ','_');
+				filename = filename.replace(/\s/g, '_');
 
 				var settings = {
 					"async": true,
