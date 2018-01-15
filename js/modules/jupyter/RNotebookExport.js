@@ -23,7 +23,7 @@ define(function (require, exports) {
             }
         };
 
-        self.notebookBase = {"cells": null, "metadata": self.metadata, "nbformat": 4, "nbformat_minor": 2};
+        self.notebookBase = {"cells": [], "metadata": self.metadata, "nbformat": 4, "nbformat_minor": 2};
 
         self.cellBase =   {
             "cell_type": null, // "code" or "markdown" or "raw"

@@ -921,19 +921,23 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				var exporter = new RNotebookExport();
 				var notebookJson = exporter.createNotebook($('#estimation-r-code').text());
 
+				// Create filename as id_studyname_timestamp.ipynb
 				var timestamp = (new Date()).toJSON();
-
 				var filename = self.cohortComparison().comparatorId() + "_" + self.cohortComparison().name() + "_" + timestamp + ".ipynb";
+				filename = filename.replace(' ','_');
 
 				var settings = {
 					"async": true,
 					"crossDomain": true,
-					"url": "http://localhost:8888/api/contents/" + filename + "?token=14108e7afee8b283e2a3e2145bd5a015ef7b6e4419c52b85",
-					"method": "PUT",
+					"url": "http://localhost:8765/" + filename,
+					// "url": "http://localhost:8888/api/contents/" + filename + "?token=my_supersecret_token",
+					"method": "POST",
+					// "method": "PUT",
 					"headers": {
-
+						"Authorization" : 'Bearer super_secret_key'
 					},
-					"data": JSON.stringify({content : notebookJson})
+					"data": JSON.stringify(notebookJson)
+					// "data": JSON.stringify({content : notebookJson})
 				};
 
 				// TODO: put file in separate Atlas folder and create if not exists
