@@ -3,7 +3,8 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-r-code.html', 'appConfig
 		function cohortComparisonRCode(params) {
 			var self = this;
 			self.config = config;
-            self.cohortComparison = params.cohortComparison;            
+            self.cohortComparison = params.cohortComparison;
+            self.codeElementId = params.codeElementId || 'estimation-r-code-single';
 		}
 
 		var component = {
