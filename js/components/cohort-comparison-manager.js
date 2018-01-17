@@ -917,15 +917,23 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				});
 			}
 
-			self.exportToNotebook = function (element) {
-				var exporter = new RNotebookExport();
-                var rCodeRaw = $('#estimation-r-code').text();
+            self.exportMultiAnalysisToNotebook = function () {
+                self.exportToNotebook('#estimation-r-code', '#exportToNotebookMessage');
+            };
+
+			self.exportSingleAnalysisToNotebook = function () {
+				self.exportToNotebook('#estimation-r-code-single', '#exportToNotebookMessageSingle');
+			};
+
+			self.exportToNotebook = function (codeElementId, messageElementId) {
+                var rCodeRaw = $(codeElementId).text();
+
                 // R code transform
                 rCodeRaw = rCodeRaw.replace(/true/g, 'TRUE').replace(/false/g, 'FALSE');
 
                 // TODO: replace also databasename, cdm schema, results schema, cohort table
 				// TODO: replace save to file by display inline
-
+                var exporter = new RNotebookExport();
 				var notebookJson = exporter.createNotebook(rCodeRaw);
 
 				// Create filename as id_studyname_timestamp.ipynb
@@ -956,7 +964,7 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				});
 
 				// if (exporter.exportSuccess) {
-                 //    $('#exportToNotebookMessage').fadeIn();
+				$(messageElementId).fadeIn();
 				// } else {
                  //    console.log('Error writing the Jupyter notebook file to xxx');
 				// }

@@ -56,7 +56,7 @@ define(function (require, exports) {
                     cell = self.createMarkdownCell(trimmedChunk.replace('----', ''));
                 } else {
                     [firstLine, chunkWithoutFirstLine] = self.splitOnce(trimmedChunk, /\n/);
-                    console.log(firstLine);
+                    // console.log(firstLine);
                     if (self.isMarkdownCell(firstLine)) {
                         cellExtra = self.createMarkdownCell(firstLine.replace('----', ''));
                         cells.push(cellExtra);
@@ -110,6 +110,10 @@ define(function (require, exports) {
         };
 
         self.splitOnce = function(string, delimiter) {
+            if (string === '') {
+                return [''];
+            }
+
             var index = string.search(delimiter);
             if (index === -1) {
                 return string;
