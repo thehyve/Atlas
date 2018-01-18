@@ -627,7 +627,7 @@
         <div role="tabpanel" data-bind="visible: $component.expressionMode() == 'rcodesingle'" class="tab-pane">
           <div class="paddedWrapper">
             <h4>Single-Analysis Approach</h4>
-            <button class="btn btn-sm btn-primary" id="btnCopyToClipboardSingle" data-bind="click: copyToClipboard" data-clipboard-target="#estimation-r-code-single">
+            <button disabled class="btn btn-sm btn-primary" id="btnCopyToClipboardSingle" data-bind="click: copyToClipboard" data-clipboard-target="#estimation-r-code-single">
               <i class="fa fa-clipboard" aria-hidden="true"></i>
               Copy To Clipboard</button>&nbsp;&nbsp;
             <span id="copyToClipboardMessageSingle" style="display:none;"><strong>Copied!</strong></span>
