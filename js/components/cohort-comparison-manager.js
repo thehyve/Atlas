@@ -920,14 +920,14 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 			}
 
             self.exportMultiAnalysisToNotebook = function () {
-                self.exportToNotebook('#estimation-r-code', '#exportToNotebookMessage');
+                self.exportToNotebook('#estimation-r-code', '#exportToNotebookMessage', 'Multi');
             };
 
 			self.exportSingleAnalysisToNotebook = function () {
-				self.exportToNotebook('#estimation-r-code-single', '#exportToNotebookMessageSingle');
+				self.exportToNotebook('#estimation-r-code-single', '#exportToNotebookMessageSingle', 'Single');
 			};
 
-			self.exportToNotebook = function (codeElementId, messageElementId) {
+			self.exportToNotebook = function (codeElementId, messageElementId, fileSuffix) {
                 var rCodeRaw = $(codeElementId).text();
 
                 // R code transform
@@ -940,7 +940,7 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 
 				// Create filename as id_studyname_timestamp.ipynb
 				var timestamp = (new Date()).toJSON();
-				var filename = self.cohortComparison().comparatorId() + "_" + self.cohortComparison().name() + "_" + timestamp + ".ipynb";
+				var filename = [self.cohortComparison().comparatorId(), fileSuffix, self.cohortComparison().name(), timestamp].join('_') + ".ipynb";
 				filename = filename.replace(/\s/g, '_');
 
 				var settings = {

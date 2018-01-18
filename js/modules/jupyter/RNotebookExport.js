@@ -43,25 +43,26 @@ define(function (require, exports) {
         self.createCells = function(rawR) {
             // Remove four spaces at start of each line
             rawR = rawR.replace(/\n {4}/g,'\n');
+            rawR = rawR.trim();
 
             // Split on blank lines, not followed by whitespace (i.e. blank lines in indented blocks will stay in one cell)
             var codeChunks = rawR.split(/\n\s*\n(?!\s)/g);
 
             var cells = [];
-            var trimmedChunk, firstLine, chunkWithoutFirstLine, cell, cellExtra;
+            var trimmedChunk, markdownChunk, chunkWithoutHeader, cell, cellExtra;
             for (var i = 0; i < codeChunks.length; i++) {
                 trimmedChunk = codeChunks[i].trim();
 
                 if (self.isMarkdownCell(trimmedChunk)) {
-                    cell = self.createMarkdownCell(trimmedChunk.replace('----', ''));
+                    cell = self.createMarkdownCell(trimmedChunk);
                 } else {
-                    [firstLine, chunkWithoutFirstLine] = self.splitOnce(trimmedChunk, /\n/);
-                    // console.log(firstLine);
-                    if (self.isMarkdownCell(firstLine)) {
-                        cellExtra = self.createMarkdownCell(firstLine.replace('----', ''));
+                    [markdownChunk, chunkWithoutHeader] = self.getMarkdownFromCode(trimmedChunk);
+                    if (markdownChunk) {
+                        cellExtra = self.createMarkdownCell(markdownChunk);
                         cells.push(cellExtra);
-                        trimmedChunk = chunkWithoutFirstLine;
+                        trimmedChunk = chunkWithoutHeader;
                     }
+
                     cell = self.createCodeCell(trimmedChunk);
                 }
                 cells.push(cell);
@@ -86,6 +87,14 @@ define(function (require, exports) {
             var cell = self.copyShallow(self.cellBase);
             cell.cell_type = "markdown";
 
+            cellContent = self.formatMarkdownCell(cellContent);
+
+            cell.source.push(cellContent);
+            self.n_markdown_cells++;
+            return cell;
+        };
+
+        self.formatMarkdownCell = function(cellContent) {
             // Make all but the first markdown cell a heading lower
             if (self.n_markdown_cells > 0 && cellContent[0] === '#') {
                 cellContent = "#" + cellContent;
@@ -96,9 +105,18 @@ define(function (require, exports) {
                 cellContent = "#" + cellContent;
             }
 
-            cell.source.push(cellContent);
-            self.n_markdown_cells++;
-            return cell;
+            // Multi-analysis header formatter
+            cellContent = cellContent.replace('----', '');
+
+            // Single-analysis header formatter
+            cellContent = cellContent.replace(/#{3,}/g,'');
+
+            // Exception for note cell
+            if (cellContent.search('TODO') !== -1) {
+                cellContent = cellContent.replace(/#/g,'');
+            }
+
+            return cellContent.trim();
         };
 
         self.copyShallow = function(object) {
@@ -106,7 +124,28 @@ define(function (require, exports) {
         };
 
         self.isMarkdownCell = function(codeLine) {
+            if (codeLine.startsWith('#############################') &&
+                codeLine.endsWith('#############################')) {
+                return true;
+            }
+
             return codeLine.endsWith('----');
+        };
+
+        self.getMarkdownFromCode = function(codeCell) {
+            // Match a starting line ending with ----
+            var matchForMulti = codeCell.match(/^.+?----\n/);
+            if (matchForMulti) {
+                return [matchForMulti[0],codeCell.replace(matchForMulti[0],'')]
+            }
+
+            // Match starting lines between #'s
+            var matchForSingle = codeCell.match(/^#+\n.+?\n#+/);
+            if (matchForSingle) {
+                return [matchForSingle[0],codeCell.replace(matchForSingle[0],'')]
+            }
+
+            return [false,codeCell];
         };
 
         self.splitOnce = function(string, delimiter) {
