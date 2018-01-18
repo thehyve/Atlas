@@ -34,8 +34,34 @@ define(function (require, exports) {
         self.n_code_cells = 0;
         self.n_markdown_cells = 0;
 
+        // Parameters to replace
+        self.dbServer = "localhost/ohdsi";
+        self.dbUser = "demo";
+        self.cdmDatabaseSchema = "cdm5";
+        self.resultsDatabaseSchema = "webapi";
+        self.exposureTable = "cohort";
+        self.outcomeTable = "cohort";
+        self.outputDirectory = "./";
+        self.target = "T";
+        self.comparator = "C";
+
+        // Patterns to replace
+        self.parameters = {
+            'localhost/ohdsi': self.dbServer,
+            'joe': self.dbUser,
+            'supersecret': self.dbUser,
+            'my_cdm_data': self.cdmDatabaseSchema,
+            'my_results|(exposure|outcome)_database_schema': self.resultsDatabaseSchema,
+            'exposure_table': self.exposureTable,
+            'outcome_table': self.outcomeTable,
+            '<insert your directory here>': self.outputDirectory,
+            'Target': self.target,
+            'Comparator': self.comparator
+        };
+
         self.createNotebook = function(rawR) {
             var notebook = self.copyShallow(self.notebookBase);
+            rawR = self.replaceParameters(rawR);
             notebook.cells = self.createCells(rawR);
             return notebook;
         };
@@ -117,6 +143,19 @@ define(function (require, exports) {
             }
 
             return cellContent.trim();
+        };
+
+        self.replaceParameters = function(string) {
+            var regex;
+            for (var key in self.parameters) {
+                // check if the property/key is defined in the object itself, not in parent
+                if (!self.parameters.hasOwnProperty(key)) {
+                    continue;
+                }
+                regex = new RegExp('"(' + key + ')"','g');
+                string = string.replace(regex, '"' + self.parameters[key] + '"');
+            }
+            return string;
         };
 
         self.copyShallow = function(object) {

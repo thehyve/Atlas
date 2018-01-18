@@ -933,7 +933,6 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
                 // R code transform
                 rCodeRaw = rCodeRaw.replace(/true/g, 'TRUE').replace(/false/g, 'FALSE');
 
-                // TODO: replace also databasename, cdm schema, results schema, cohort table
 				// TODO: replace save to file by display inline
                 var exporter = new RNotebookExport();
 				var notebookJson = exporter.createNotebook(rCodeRaw);
