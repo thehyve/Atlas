@@ -3,9 +3,9 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				'cohortcomparison/ComparativeCohortAnalysis', 'cohortbuilder/options',
 				'cohortbuilder/CohortDefinition', 'vocabularyprovider',
 				'conceptsetbuilder/InputTypes/ConceptSet',
+        		'jupyter/RNotebookExport',
 				'nvd3', 'databindings/d3ChartBinding',
 				'css!./styles/nv.d3.min.css',
-        		'jupyter/RNotebookExport',
 				'databindings/d3ChartBinding'],
 	function ($, ko, view, _, clipboard, cohortDefinitionAPI, config, ohdsiUtil,
 		ComparativeCohortAnalysis, options, CohortDefinition, vocabularyAPI,
@@ -933,31 +933,26 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
                 // R code transform
                 rCodeRaw = rCodeRaw.replace(/true/g, 'TRUE').replace(/false/g, 'FALSE');
 
-				// TODO: replace save to file by display inline
                 var exporter = new RNotebookExport();
 				var notebookJson = exporter.createNotebook(rCodeRaw);
 
-				// Create filename as id_studyname_timestamp.ipynb
+				// Create filename as <id>_<studyname>_<timestamp>.ipynb
 				var timestamp = (new Date()).toJSON();
 				var filename = [self.cohortComparison().comparatorId(), fileSuffix, self.cohortComparison().name(), timestamp].join('_') + ".ipynb";
 				filename = filename.replace(/\s/g, '_');
 
-				var settings = {
-					"async": true,
-					"crossDomain": true,
-					"url": "http://localhost:8765/" + filename,
-					// "url": "http://localhost:8888/api/contents/" + filename + "?token=my_supersecret_token",
-					"method": "POST",
-					// "method": "PUT",
-					"headers": {
-						"Authorization" : 'Bearer super_secret_key'
-					},
-					"data": JSON.stringify(notebookJson)
-					// "data": JSON.stringify({content : notebookJson})
-				};
-
-				// TODO: put file in separate Atlas folder and create if not exists
-				// TODO: some simple versioning instead of timestamp
+				// TODO: retrieve Token from user in UI
+                // TODO: put file in separate Atlas folder and create if not exists
+                var settings = {
+                    "async": true,
+                    "crossDomain": true,
+                    "url": "https://ohdsi-test-jupyterhub.thehyve.net/user/maxim/api/contents/JupyterNotebooks/Atlas_link/" + filename,
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization" : 'Token ddd85ca4f8f546e68eec35799a81f956'
+                    },
+                    "data": JSON.stringify({content : notebookJson})
+                };
 
 				$.ajax(settings).done(function (response) {
 					// TODO: error management. And check if file already exists (will throw error)
