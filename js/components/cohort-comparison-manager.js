@@ -927,6 +927,9 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				self.exportToNotebook('#estimation-r-code-single', '#exportToNotebookMessageSingle', 'Single');
 			};
 
+			self.jupyterhubToken = ko.observable();
+			self.jupyterhubUser = ko.observable();
+			self.jupyterhubFileUrl = ko.observable();
 			self.exportToNotebook = function (codeElementId, messageElementId, fileSuffix) {
                 var rCodeRaw = $(codeElementId).text();
 
@@ -940,30 +943,25 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				var timestamp = (new Date()).toJSON();
 				var filename = [self.cohortComparison().comparatorId(), fileSuffix, self.cohortComparison().name(), timestamp].join('_') + ".ipynb";
 				filename = filename.replace(/\s/g, '_');
+				self.jupyterhubFileUrl([config.jupyterhub.url,'user', self.jupyterhubUser(), 'tree', config.jupyterhub.subFolder, filename].join('/'));
 
-				// TODO: retrieve Token from user in UI
-                // TODO: put file in separate Atlas folder and create if not exists
-                var settings = {
+				// Send file
+				$.ajax({
                     "async": true,
                     "crossDomain": true,
-                    "url": "https://ohdsi-test-jupyterhub.thehyve.net/user/maxim/api/contents/JupyterNotebooks/Atlas_link/" + filename,
+                    "url": [config.jupyterhub.url, 'user', self.jupyterhubUser(), 'api/contents', config.jupyterhub.subFolder, filename].join("/"),
                     "method": "PUT",
                     "headers": {
-                        "Authorization" : 'Token ddd85ca4f8f546e68eec35799a81f956'
+                        "Authorization" : 'Token ' + self.jupyterhubToken()
                     },
                     "data": JSON.stringify({content : notebookJson})
-                };
-
-				$.ajax(settings).done(function (response) {
-					// TODO: error management. And check if file already exists (will throw error)
-					// console.log(response);
+                }).done(function (response) {
+                	console.log(response);
+					$(messageElementId).fadeIn();
+				}).fail(function (response) {
+					// TODO: trigger popup
+					console.log(response);
 				});
-
-				// if (exporter.exportSuccess) {
-				$(messageElementId).fadeIn();
-				// } else {
-                 //    console.log('Error writing the Jupyter notebook file to xxx');
-				// }
 			};
 
 			self.newCohortComparison = function () {

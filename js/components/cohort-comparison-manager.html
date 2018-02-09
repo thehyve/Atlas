@@ -611,14 +611,23 @@
             <button class="btn btn-sm btn-primary" id="btnCopyToClipboard" data-bind="click: copyToClipboard" data-clipboard-target="#estimation-r-code"><i class="fa fa-clipboard" aria-hidden="true"></i> Copy To Clipboard</button>&nbsp;&nbsp;<span id="copyToClipboardMessage"
               style="display:none;"><strong>Copied!</strong></span>
 
-            <button class="btn btn-sm btn-primary" id="btnExportToNotebook" data-bind="click: exportMultiAnalysisToNotebook">
-              <i class="fa fa-share" aria-hidden="true"></i>
-              Export to Jupyter notebook
-            </button>
-            <br><br>
-            <span id="exportToNotebookMessage" style="display:none;">
-              Exported to /path/to/file/studyname.ipynb.
-              Open JupyterHub at <a href="https://ohdsi-test-jupyterhub.thehyve.net">https://ohdsi-test-jupyterhub.thehyve.net</a> and log in.
+            <span data-bind="visible: config.jupyterhub.enabled">
+              <button class="btn btn-sm btn-primary" id="btnExportToNotebook" data-bind="click: exportMultiAnalysisToNotebook">
+                <i class="fa fa-share" aria-hidden="true"></i>
+                Export to Jupyter notebook
+              </button>
+              <input type="text" size="10" placeholder="Username" data-bind="value: jupyterhubUser">
+              <input type="text" size="40" placeholder="Your JupyterHub Token" data-bind="value: jupyterhubToken">
+              <i class="fa fa-info-circle" data-toggle="collapse" data-target="#jhubinfo" style="font-size:15px;color:#245580" title="Click for more information on JupyterHub"></i>
+              <div id="jhubinfo" class="collapse">
+                To create a connection to JupyterHub, login and start your server at
+                <a data-bind="text: config.jupyterhub.url, attr: {href: config.jupyterhub.url}" target="_blank"></a>
+                Then, go to 'Control Panel'->'Token' and request a new API token. Copy it and enter it in the text box above, together with your username.
+                Click on 'Export to Jupyter notebook'.
+              </div>
+              <div id="exportToNotebookMessage" style="display:none;">
+                <a data-bind="attr: {href: jupyterhubFileUrl}" target="_blank">Exported notebook</a>
+              </div>
             </span>
 
             <cohort-comparison-multi-r-code params="cohortComparison: $component.cohortComparison, codeElementId: 'estimation-r-code'"></cohort-comparison-multi-r-code>
@@ -632,14 +641,23 @@
               Copy To Clipboard</button>&nbsp;&nbsp;
             <span id="copyToClipboardMessageSingle" style="display:none;"><strong>Copied!</strong></span>
 
-            <button class="btn btn-sm btn-primary" id="btnExportToNotebookSingle" data-bind="click: exportSingleAnalysisToNotebook">
-              <i class="fa fa-share" aria-hidden="true"></i>
-              Export to Jupyter notebook
-            </button>
-            <br><br>
-            <span id="exportToNotebookMessageSingle" style="display:none;">
-              Exported to /path/to/file/studyname.ipynb.
-              Open JupyterHub at <a href="https://ohdsi-test-jupyterhub.thehyve.net">https://ohdsi-test-jupyterhub.thehyve.net</a> and log in.
+            <span data-bind="visible: config.jupyterhub.enabled">
+              <button class="btn btn-sm btn-primary" id="btnExportToNotebookSingle" data-bind="click: exportSingleAnalysisToNotebook">
+                <i class="fa fa-share" aria-hidden="true"></i>
+                Export to Jupyter notebook
+              </button>
+              <input type="text" size="10" placeholder="Username" data-bind="value: jupyterhubUser">
+              <input type="text" size="40" placeholder="Your JupyterHub Token" data-bind="value: jupyterhubToken">
+              <i class="fa fa-info-circle" data-toggle="collapse" data-target="#jhubinfo2" style="font-size:15px;color:#245580" title="Click for more information on JupyterHub"></i>
+              <div id="jhubinfo2" class="collapse">
+                To create a connection to JupyterHub, login and start your server at
+                <a data-bind="text: config.jupyterhub.url, attr: {href: config.jupyterhub.url}" target="_blank"></a>
+                Then, go to 'Control Panel'->'Token' and request a new API token. Copy it and enter it in the text box above, together with your username.
+                Click on 'Export to Jupyter notebook'.
+              </div>
+              <div id="exportToNotebookMessageSingle" style="display:none;">
+                <a data-bind="attr: {href: jupyterhubFileUrl}" target="_blank">Exported notebook</a>
+              </div>
             </span>
 
             <cohort-comparison-r-code params="cohortComparison: $component.cohortComparison, codeElementId: 'estimation-r-code-single'" id="estimation-r-code-single"></cohort-comparison-r-code>
