@@ -36,7 +36,8 @@ define(function (require, exports) {
 
         // Parameters to replace
         self.dbServer = "localhost/ohdsi";
-        self.dbUser = "demo";
+        self.dbUser = "<user>";
+        self.dbPassword = "<password>";
         self.cdmDatabaseSchema = "cdm5";
         self.resultsDatabaseSchema = "webapi";
         self.exposureTable = "cohort";
@@ -49,7 +50,7 @@ define(function (require, exports) {
         self.parameters = {
             'localhost/ohdsi': self.dbServer,
             'joe': self.dbUser,
-            'supersecret': self.dbUser,
+            'supersecret': self.dbPassword,
             'my_cdm_data': self.cdmDatabaseSchema,
             'my_results|(exposure|outcome)_database_schema': self.resultsDatabaseSchema,
             'exposure_table': self.exposureTable,
@@ -58,6 +59,13 @@ define(function (require, exports) {
             'Target': self.target,
             'Comparator': self.comparator
         };
+
+        self.RConnectionTest = "\nconnection <- tryCatch(connect(connectionDetails), error = function(err) {cat(err$message, '\\n')})\n\
+if (length(connection) == 0) {\n\
+    cat('FAILED to connect','\\n')\n\
+} else {\n\
+    cat('Connected succesfully','\\n')\n\
+}";
 
         self.createNotebook = function(rawR) {
             var notebook = self.copyShallow(self.notebookBase);
@@ -102,6 +110,32 @@ define(function (require, exports) {
             codeCell.execution_count = null;
             codeCell.outputs = [];
             // codeCell.metadata.collapsed = true;
+
+            // Add a connection test to cell with database parameters
+            if (cellContent.includes(self.dbPassword)) {
+                cellContent += "\n" + self.RConnectionTest;
+            }
+
+            // Remove old covariate setting parameters
+            if (cellContent.includes("createCovariateSettings")) {
+                // cellContent = cellContent.replace(/useCovariateConditionOccurrence.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateConditionEra.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateDrugExposure.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateDrugEra.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateDrugGroup.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateConditionGroup.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateProcedureOccurrence.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateProcedureGroup.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateObservation.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateMeasurement.+?,/, "");
+                // cellContent = cellContent.replace(/useCovariateRiskScores.+?,/, "");
+
+                cellContent = cellContent.replace(/useCovariateConditionOccurrence(.|\n)+?\)/, ")");
+
+                cellContent = cellContent.replace(/useCovariateDemographics.+?,/, "");
+                cellContent = cellContent.replace(/Demographics(Month|Year)/g, "DemographicsIndex$1");
+                cellContent = cellContent.replace(/useCovariate/g, "use");
+            }
 
             codeCell.source.push(cellContent);
 
