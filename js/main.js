@@ -106,6 +106,7 @@ requirejs.config({
 		"profile-manager": "components/profile-manager",
 		"explore-cohort": "components/explore-cohort",
 		"cohortcomparison": "modules/cohortcomparison",
+		"jupyter": "modules/jupyter",
 		"r-manager": "components/r-manager",
 		"negative-controls": "components/negative-controls",
 		"atlascharts": "https://unpkg.com/@ohdsi/atlascharts@1.1.0/dist/atlascharts.min",

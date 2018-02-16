@@ -3,10 +3,11 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				'cohortcomparison/ComparativeCohortAnalysis', 'cohortbuilder/options',
 				'cohortbuilder/CohortDefinition', 'vocabularyprovider',
 				'conceptsetbuilder/InputTypes/ConceptSet',
+        		'jupyter/RNotebookExport',
 				'databindings/d3ChartBinding'],
 	function ($, ko, view, _, clipboard, cohortDefinitionAPI, config, ohdsiUtil,
 		ComparativeCohortAnalysis, options, CohortDefinition, vocabularyAPI,
-		ConceptSet) {
+		ConceptSet, RNotebookExport) {
 		function cohortComparisonManager(params) {
 
 			var DEBUG = true;
@@ -915,6 +916,50 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 					console.log(e);
 				});
 			}
+
+            self.exportMultiAnalysisToNotebook = function () {
+                self.exportToNotebook('#estimation-r-code', '#exportToNotebookMessage', 'Multi');
+            };
+
+			self.exportSingleAnalysisToNotebook = function () {
+				self.exportToNotebook('#estimation-r-code-single', '#exportToNotebookMessageSingle', 'Single');
+			};
+
+            self.jupyterhubUser = ko.observable();
+            self.jupyterhubToken = ko.observable();
+			self.jupyterhubFileUrl = ko.observable();
+			self.exportToNotebook = function (codeElementId, messageElementId, fileSuffix) {
+                var rCodeRaw = $(codeElementId).text();
+
+                // R code transform
+                rCodeRaw = rCodeRaw.replace(/true/g, 'TRUE').replace(/false/g, 'FALSE');
+
+                var exporter = new RNotebookExport();
+				var notebookJson = exporter.createNotebook(rCodeRaw);
+
+				// Create filename as <id>_<studyname>_<timestamp>.ipynb
+				var timestamp = (new Date()).toJSON();
+				var filename = [self.cohortComparison().comparatorId(), fileSuffix, self.cohortComparison().name(), timestamp].join('_') + ".ipynb";
+				filename = filename.replace(/\s/g, '_');
+				self.jupyterhubFileUrl([config.jupyterhub.url,'user', self.jupyterhubUser(), 'tree', config.jupyterhub.subFolder, filename].join('/'));
+
+				// Send file
+				$.ajax({
+                    "async": true,
+                    "crossDomain": true,
+                    "url": [config.jupyterhub.url, 'user', self.jupyterhubUser(), 'api/contents', config.jupyterhub.subFolder, filename].join("/"),
+                    "method": "PUT",
+                    "headers": {
+                        "Authorization" : 'Token ' + self.jupyterhubToken()
+                    },
+                    "data": JSON.stringify({content : notebookJson})
+                }).done(function (response) {
+                	console.log(response);
+					$(messageElementId).fadeIn();
+				}).fail(function (response) {
+					console.log(response);
+				});
+			};
 
 			self.newCohortComparison = function () {
 				self.cohortComparison(new ComparativeCohortAnalysis());

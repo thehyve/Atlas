@@ -596,6 +596,7 @@
         <ul class="nav nav-pills">
           <li role="presentation" data-bind="css: {active: $component.expressionMode() == 'print' }, click: function() {$component.expressionMode('print') };"><a>Print Friendly</a></li>
           <li role="presentation" data-bind="css: {active: $component.expressionMode() == 'rcode' }, click: function() {$component.expressionMode('rcode') };"><a>R Code</a></li>
+          <li role="presentation" data-bind="css: {active: $component.expressionMode() == 'rcodesingle' }, click: function() {$component.expressionMode('rcodesingle') };"><a>R Code - Single</a></li>
           <li role="presentation" data-bind="css: {active: $component.expressionMode() == 'import' }, click: function() {$component.expressionMode('import') };"><a>Import</a></li>
           <li role="presentation" data-bind="css: {active: $component.expressionMode() == 'export' }, click: function() {$component.expressionMode('export') };"><a>Export</a></li>
         </ul>
@@ -609,7 +610,61 @@
             <h4>Multi-Analysis Approach</h4>
             <button class="btn btn-sm btn-primary" id="btnCopyToClipboard" data-bind="click: copyToClipboard" data-clipboard-target="#estimation-r-code"><i class="fa fa-clipboard" aria-hidden="true"></i> Copy To Clipboard</button>&nbsp;&nbsp;<span id="copyToClipboardMessage"
               style="display:none;"><strong>Copied!</strong></span>
+
+            <span data-bind="visible: config.jupyterhub.enabled">
+              <button class="btn btn-sm btn-primary" id="btnExportToNotebook" data-bind="click: exportMultiAnalysisToNotebook">
+                <i class="fa fa-share" aria-hidden="true"></i>
+                Export to Jupyter notebook
+              </button>
+              <input type="text" size="10" placeholder="Username" data-bind="value: jupyterhubUser">
+              <input type="text" size="40" placeholder="Your JupyterHub Token" data-bind="value: jupyterhubToken">
+              <i class="fa fa-info-circle" data-toggle="collapse" data-target="#jhubinfo" style="font-size:15px;color:#245580" title="Click for more information on JupyterHub"></i>
+              <div id="jhubinfo" class="collapse">
+                To create a connection to JupyterHub, login and start your server at
+                <a data-bind="text: config.jupyterhub.url, attr: {href: config.jupyterhub.url}" target="_blank"></a>
+                Then, go to 'Control Panel'->'Token' and request a new API token. Copy it and enter it in the text box above, together with your username.
+                Click on 'Export to Jupyter notebook'.
+              </div>
+              <div id="exportToNotebookMessage" style="display:none;">
+                <a data-bind="attr: {href: jupyterhubFileUrl}" target="_blank">
+                  Go to the R Notebook <i class="fa fa-file-code-o" aria-hidden="true"></i>
+                </a>
+              </div>
+            </span>
+
             <cohort-comparison-multi-r-code params="cohortComparison: $component.cohortComparison, codeElementId: 'estimation-r-code'"></cohort-comparison-multi-r-code>
+          </div>
+        </div>
+        <div role="tabpanel" data-bind="visible: $component.expressionMode() == 'rcodesingle'" class="tab-pane">
+          <div class="paddedWrapper">
+            <h4>Single-Analysis Approach</h4>
+            <button disabled class="btn btn-sm btn-primary" id="btnCopyToClipboardSingle" data-bind="click: copyToClipboard" data-clipboard-target="#estimation-r-code-single">
+              <i class="fa fa-clipboard" aria-hidden="true"></i>
+              Copy To Clipboard</button>&nbsp;&nbsp;
+            <span id="copyToClipboardMessageSingle" style="display:none;"><strong>Copied!</strong></span>
+
+            <span data-bind="visible: config.jupyterhub.enabled">
+              <button class="btn btn-sm btn-primary" id="btnExportToNotebookSingle" data-bind="click: exportSingleAnalysisToNotebook">
+                <i class="fa fa-share" aria-hidden="true"></i>
+                Export to Jupyter notebook
+              </button>
+              <input type="text" size="10" placeholder="Username" data-bind="value: jupyterhubUser">
+              <input type="text" size="40" placeholder="Your JupyterHub Token" data-bind="value: jupyterhubToken">
+              <i class="fa fa-info-circle" data-toggle="collapse" data-target="#jhubinfo2" style="font-size:15px;color:#245580" title="Click for more information on JupyterHub"></i>
+              <div id="jhubinfo2" class="collapse">
+                To create a connection to JupyterHub, login and start your server at
+                <a data-bind="text: config.jupyterhub.url, attr: {href: config.jupyterhub.url}" target="_blank"></a>
+                Then, go to 'Control Panel'->'Token' and request a new API token. Copy it and enter it in the text box above, together with your username.
+                Click on 'Export to Jupyter notebook'.
+              </div>
+              <div id="exportToNotebookMessageSingle" style="display:none;">
+                <a data-bind="attr: {href: jupyterhubFileUrl}" target="_blank">
+                  Go to the R Notebook <i class="fa fa-file-code-o" aria-hidden="true"></i>
+                </a>
+              </div>
+            </span>
+
+            <cohort-comparison-r-code params="cohortComparison: $component.cohortComparison, codeElementId: 'estimation-r-code-single'" id="estimation-r-code-single"></cohort-comparison-r-code>
           </div>
         </div>
         <div role="tabpanel" data-bind="visible: $component.expressionMode() == 'import'" class="tab-pane">
