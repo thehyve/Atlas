@@ -927,8 +927,8 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
 				self.exportToNotebook('#estimation-r-code-single', '#exportToNotebookMessageSingle', 'Single');
 			};
 
-			self.jupyterhubToken = ko.observable();
-			self.jupyterhubUser = ko.observable();
+            self.jupyterhubUser = ko.observable();
+            self.jupyterhubToken = ko.observable();
 			self.jupyterhubFileUrl = ko.observable();
 			self.exportToNotebook = function (codeElementId, messageElementId, fileSuffix) {
                 var rCodeRaw = $(codeElementId).text();
@@ -959,7 +959,6 @@ define(['jquery', 'knockout', 'text!./cohort-comparison-manager.html', 'lodash',
                 	console.log(response);
 					$(messageElementId).fadeIn();
 				}).fail(function (response) {
-					// TODO: trigger popup
 					console.log(response);
 				});
 			};
