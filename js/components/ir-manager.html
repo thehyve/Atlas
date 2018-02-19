@@ -34,6 +34,10 @@
 			<li role="presentation" data-bind="css: { active: $component.activeTab() == 'generation' }, click: function() { $component.activeTab('generation') };">
 				<a>Generation</a>                
 			</li>
+
+			<li role="presentation" data-bind="css: { active: $component.activeTab() == 'generation2' }, click: function() { $component.activeTab('generation2') };">
+				<a>Generation2</a>
+			</li>
             
             <li role="presentation" data-bind="css: { active: $component.activeTab() == 'utilities' }, click: function() { $component.activeTab('utilities') };"><a>Utilities</a>
             </li>
@@ -57,8 +61,15 @@
 																			eventListener: [{ event: 'click', selector: 'button.removeResult', callback: removeResult}, {event: 'click', selector: 'button.execute', callback: onExecuteClick}]" class="tab-pane">
 				<button type="button" class="btn btn-sm btn-success pull-right" data-bind="click:function() { exportAnalysisCSV(); }, css: {'disabled': dirtyFlag().isDirty, 'btn-success': !dirtyFlag().isDirty()}"><i class="fa fa-download" aria-hidden="true"></i> Export Analysis to CSV</button>
 				<ir-analysis-results params="sources: filteredSources, analysisCohorts: analysisCohorts"></ir-analysis-results>
-			</div>		
-            <div role="tabpanel" data-bind="css: { active: $component.activeTab() == 'utilities' }" class="tab-pane">
+			</div>
+
+			<div role="tabpanel" data-bind="css: { active: $component.activeTab() == 'generation2' },
+																			eventListener: [{ event: 'click', selector: 'button.removeResult', callback: removeResult}, {event: 'click', selector: 'button.execute', callback: onExecuteClick}]" class="tab-pane">
+				<button type="button" class="btn btn-sm btn-success pull-right" data-bind="click:function() { exportAnalysisCSV(); }, css: {'disabled': dirtyFlag().isDirty, 'btn-success': !dirtyFlag().isDirty()}"><i class="fa fa-download" aria-hidden="true"></i> Export Analysis to CSV</button>
+				<dashboard-results params="sources: filteredSources, analysisCohorts: analysisCohorts"></dashboard-results>
+			</div>
+
+			<div role="tabpanel" data-bind="css: { active: $component.activeTab() == 'utilities' }" class="tab-pane">
                 <div class="paddedWrapper">
                     <ul class="nav nav-pills">
                         <li role="presentation" data-bind="css: {active: $component.expressionMode() == 'import' }, click: function() {$component.expressionMode('import') };"><a>Import</a></li>

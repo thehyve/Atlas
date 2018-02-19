@@ -11,6 +11,9 @@ define(function (require, exports) {
 	var irAnalysisResults = require('./components/results');
 	ko.components.register('ir-analysis-results', irAnalysisResults);
 
+    var dashboardResults = require('./components/dashboard');
+    ko.components.register('dashboard-results', dashboardResults);
+
 	var irAnalysisReport = require('./components/report');
 	ko.components.register('ir-analysis-report', irAnalysisReport);
 	
