@@ -1,23 +1,28 @@
 <div class="container page-header">
     <h1>Nothing short of a dashboard</h1>
 </div>
+
+
+<div class="container page-header">
+    <h3>The counts they are a-changin'</h3>
+</div>
+
 <table style="width: 100%" class="sourceTable">
+
     <thead>
-    <th style="width: 26px"></th>
-    <th>OutcomeCohort1</th>
-    <th>OutcomeCohort2</th>
-    <th></th>
-    </thead>
-    <tbody>
     <tr>
-        <td>TargetCohort1</td>
+    <th style="width: 26px"></th>
+        <!-- ko foreach: analysisCohorts().outcomeCohorts -->
+        <th> <span data-bind="text: name"></span></th>
+        <!-- /ko -->
+    </tr>
+    </thead>
+
+    <tbody data-bind="foreach: analysisCohorts().targetCohorts">
+    <tr>
+        <td data-bind="text: name"></td>
         <td>1</td>
         <td>2</td>
-    </tr>
-    <tr>
-        <td>TargetCohort2</td>
-        <td>3</td>
-        <td>4</td>
     </tr>
     </tbody>
 </table>
