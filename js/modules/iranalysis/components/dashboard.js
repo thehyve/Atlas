@@ -11,8 +11,10 @@ define(['knockout',
         var self = this;
 
         self.sources = params.sources;
+        // self.sources().push({'source':{'sourceName':'Mock Source', 'sourceKey':'mock'},'info':ko.observable({'summaryList':[]})});
         self.dirtyFlag = params.dirtyFlag;
         self.analysisCohorts = params.analysisCohorts;
+        self.selectedSourceKey = ko.observable();
         self.dashboardData = ko.observableArray();
         self.availableModes = ko.observableArray(["Cases","Proportion","Rate"]);
         self.activeMode = ko.observable("Cases");
@@ -37,31 +39,33 @@ define(['knockout',
             }
         });
 
-        self.getInfo = function (sourceId, targetId, outcomeId) {
-            var summaryList = self.sources()[sourceId].info().summaryList;
-            return summaryList.filter(function (item) {
-                return (item.targetId == targetId && item.outcomeId == outcomeId);
+        self.getIRdata = function (sourceKey, targetId, outcomeId) {
+            var source = self.sources().filter(function (item) {
+                return (item.source.sourceKey === sourceKey);
+            })[0];
+
+            return source.info().summaryList.filter(function (item) {
+                return (item.targetId === targetId && item.outcomeId === outcomeId);
             })[0] || {totalPersons: 0, cases: 0, timeAtRisk: 0};
         };
 
-        self.loadDashboardData = function(sourceId) {
+        self.loadDashboardData = function() {
             self.analysisCohorts().targetCohorts().forEach(function(targetCohort) {
                 var outcomes = ko.observableArray();
                 self.analysisCohorts().outcomeCohorts().forEach(function(outcomeCohort) {
-                    var info = self.getInfo(sourceId, targetCohort.id, outcomeCohort.id);
-
                     var cell = ko.computed(function() {
+                        var irData = self.getIRdata(self.selectedSourceKey(), targetCohort.id, outcomeCohort.id);
                         switch(self.activeMode()) {
                             case "Cases":
-                                return info.cases;
+                                return irData.cases;
                             case "Proportion":
-                                if (info.totalPersons > 0)
-                                    return (info.cases / info.totalPersons * self.rateMultiplier()).toFixed(2);
+                                if (irData.totalPersons > 0)
+                                    return (irData.cases / irData.totalPersons * self.rateMultiplier()).toFixed(2);
                                 else
                                     return "NA";
                             case "Rate":
-                                if (info.timeAtRisk > 0)
-                                    return (info.cases / info.timeAtRisk * self.rateMultiplier()).toFixed(2);
+                                if (irData.timeAtRisk > 0)
+                                    return (irData.cases / irData.timeAtRisk * self.rateMultiplier()).toFixed(2);
                                 else
                                     return "NA";
                             default:
@@ -81,6 +85,7 @@ define(['knockout',
 
         if (self.sources().length > 0) {
             // Load the results of the first source
+            self.selectedSourceKey(self.sources()[0].source.sourceKey);
             self.loadDashboardData(0);
         }
 

@@ -12,8 +12,14 @@ In results.js/dashboard.js:
     * `name`
     
 - `self.sources`
-  Created in ir-manager.js, line 20
+  Created in ir-manager.js line 225 and ir info loaded on 20
   * `source`[] For every data source
+    * `source`
+      * `sourceId`
+      * `sourceName`
+      * `sourceKey`
+      * `sourceDialect`
+      * `daimons`[]
     * `info`
     Retrieved from WebApi: [http://localhost:8080/WebAPI/ir/3/info]()
       * `summaryList`[] For every target/outcome pair

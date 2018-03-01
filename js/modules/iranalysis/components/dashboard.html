@@ -1,5 +1,13 @@
 <h3>The counts they are a-changin'</h3>
 
+Showing source:
+<select data-bind="
+    options: sources,
+	optionsText: function(item) { return item.source.sourceName },
+	optionsValue: function(item) { return item.source.sourceKey },
+	value: selectedSourceKey" class="mediumInputField">
+</select>
+
 <ul class="nav nav-pills">
     <!-- ko foreach: availableModes -->
     <li data-bind="click: function() {$component.activeMode($data) }, css: {active: $component.activeMode() == $data };">
