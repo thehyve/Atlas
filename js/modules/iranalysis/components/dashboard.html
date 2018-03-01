@@ -8,28 +8,16 @@
     <tr>
     <th style="width: 26px"></th>
         <!-- ko foreach: analysisCohorts().outcomeCohorts -->
-        <th data-bind="text: name" colspan="2" style="text-align: left;"></th>
-        <!-- /ko -->
-    </tr>
-    <tr>
-        <th style="width: 26px"></th>
-        <!-- ko foreach: analysisCohorts().outcomeCohorts -->
-        <th>Cases</th>
-        <th>Persons</th>
+        <th data-bind="text: name" colspan="1" style="text-align: left;"></th>
         <!-- /ko -->
     </tr>
     </thead>
 
-    <tbody data-bind="foreach: analysisCohorts().targetCohorts">
+    <tbody data-bind="foreach: results">
     <tr>
         <td nowrap data-bind="text: name"></td>
-        <!-- ko if: $component.sources()[0] -->
-            <!-- ko foreach: $component.analysisCohorts().outcomeCohorts -->
-            <!-- ko with: $component.getResults($component.sources()[0], $parent.id, id) -->
-            <td class="dataCol" data-bind="text: cases.toLocaleString()"></td>
-            <td class="dataCol" data-bind="text: totalPersons.toLocaleString()"></td>
-            <!-- /ko -->
-            <!-- /ko -->
+        <!-- ko foreach: data -->
+            <td class="dataCol" data-bind="text: column"></td>
         <!-- /ko -->
     </tr>
     </tbody>
