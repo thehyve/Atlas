@@ -1,6 +1,19 @@
-<div class="container page-header">
-    <h3>The counts they are a-changin'</h3>
-</div>
+<h3>The counts they are a-changin'</h3>
+
+<ul class="nav nav-pills">
+    <!-- ko foreach: availableModes -->
+    <li data-bind="click: function() {$component.activeMode($data) }, css: {active: $component.activeMode() == $data };">
+        <a data-bind="text: $data"></a>
+    </li>
+    <!-- /ko -->
+    <!-- ko ifnot: activeMode() == "Cases" -->
+    <li>
+        <input type="range" min=1 max=5 data-bind="value: rateSteps, valueUpdate: 'input'" style="margin-top: 10px;">
+    </li><li>
+        <output data-bind="text: rateCaption"></output>
+    </li>
+    <!-- /ko -->
+</ul>
 
 <table style="width: 100%" class="sourceTable">
 
@@ -13,11 +26,11 @@
     </tr>
     </thead>
 
-    <tbody data-bind="foreach: results">
+    <tbody data-bind="foreach: dashboardData">
     <tr>
-        <td nowrap data-bind="text: name"></td>
-        <!-- ko foreach: data -->
-            <td class="dataCol" data-bind="text: column"></td>
+        <td nowrap data-bind="text: targetCohortName"></td>
+        <!-- ko foreach: outcomes -->
+            <td class="dataCol" data-bind="text: $data"></td>
         <!-- /ko -->
     </tr>
     </tbody>

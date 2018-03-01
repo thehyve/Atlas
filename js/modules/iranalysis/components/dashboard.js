@@ -7,46 +7,61 @@ define(['knockout',
     $,
     template) {
 
-    // TODO: reuse methods from component in results.js
     function dashboardResultsViewer(params) {
         var self = this;
 
         self.sources = params.sources;
         self.dirtyFlag = params.dirtyFlag;
         self.analysisCohorts = params.analysisCohorts;
+        self.dashboardData = ko.observableArray();
+        self.availableModes = ko.observableArray(["Cases","Proportion","Rate"]);
+        self.activeMode = ko.observable("Cases");
+        self.rateSteps = ko.observable(3);
 
-        self.mode = ko.observable("case");
-        self.rateMultiplier = ko.observable(1000);
-        self.results = ko.observableArray();
+        self.rateMultiplier = ko.pureComputed(function() {
+            return Math.pow(10,self.rateSteps());
+        });
 
-        self.getResults = function (source, targetId, outcomeId) {
-            var summaryList = source.info().summaryList;
+        self.rateCaption = ko.pureComputed(function() {
+            var multiplier = self.rateMultiplier();
+            if (multiplier >= 1000)
+                multiplier = (multiplier / 1000) + "k";
+
+            switch(self.activeMode()) {
+                case "Proportion":
+                    return "per " + multiplier  + " persons";
+                case "Rate":
+                    return "per " + multiplier  + " years at risk";
+                default:
+                    return "";
+            }
+        });
+
+        self.getInfo = function (sourceId, targetId, outcomeId) {
+            var summaryList = self.sources()[sourceId].info().summaryList;
             return summaryList.filter(function (item) {
                 return (item.targetId == targetId && item.outcomeId == outcomeId);
             })[0] || {totalPersons: 0, cases: 0, timeAtRisk: 0};
         };
 
-        self.loadResults = function(source) {
-            var summaryList = source.info().summaryList;
+        self.loadDashboardData = function(sourceId) {
             self.analysisCohorts().targetCohorts().forEach(function(targetCohort) {
-                var row = ko.observableArray();
+                var outcomes = ko.observableArray();
                 self.analysisCohorts().outcomeCohorts().forEach(function(outcomeCohort) {
-                    var info = summaryList.filter(function (item) {
-                        return (item.targetId == targetCohort.id && item.outcomeId == outcomeCohort.id);
-                    })[0] || {totalPersons: 0, cases: 0, timeAtRisk: 0};
+                    var info = self.getInfo(sourceId, targetCohort.id, outcomeCohort.id);
 
-                    var column = ko.computed(function() {
-                        switch(self.mode()) {
-                            case "case":
+                    var cell = ko.computed(function() {
+                        switch(self.activeMode()) {
+                            case "Cases":
                                 return info.cases;
-                            case "proportion":
+                            case "Proportion":
                                 if (info.totalPersons > 0)
                                     return (info.cases / info.totalPersons * self.rateMultiplier()).toFixed(2);
                                 else
                                     return "NA";
-                            case "rate":
+                            case "Rate":
                                 if (info.timeAtRisk > 0)
-                                    return (info.cases / (info.timeAtRisk)* self.rateMultiplier()).toFixed(2);
+                                    return (info.cases / info.timeAtRisk * self.rateMultiplier()).toFixed(2);
                                 else
                                     return "NA";
                             default:
@@ -54,14 +69,19 @@ define(['knockout',
                         }
                     });
 
-                   row.push({'column':column});
+                    outcomes.push(cell);
                 });
-                self.results.push({'name':targetCohort.name, 'data':row});
+
+                self.dashboardData.push({
+                    'targetCohortName':targetCohort.name,
+                    'outcomes':outcomes
+                });
             })
         };
 
         if (self.sources().length > 0) {
-            self.loadResults(self.sources()[0]);
+            // Load the results of the first source
+            self.loadDashboardData(0);
         }
 
     }
