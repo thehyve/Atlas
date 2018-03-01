@@ -36,7 +36,7 @@
 			</li>
 
 			<li role="presentation" data-bind="css: { active: $component.activeTab() == 'generation2' }, click: function() { $component.activeTab('generation2') };">
-				<a>Generation2</a>
+				<a>Dashboard</a>
 			</li>
             
             <li role="presentation" data-bind="css: { active: $component.activeTab() == 'utilities' }, click: function() { $component.activeTab('utilities') };"><a>Utilities</a>
@@ -65,7 +65,6 @@
 
 			<div role="tabpanel" data-bind="css: { active: $component.activeTab() == 'generation2' },
 																			eventListener: [{ event: 'click', selector: 'button.removeResult', callback: removeResult}, {event: 'click', selector: 'button.execute', callback: onExecuteClick}]" class="tab-pane">
-				<button type="button" class="btn btn-sm btn-success pull-right" data-bind="click:function() { exportAnalysisCSV(); }, css: {'disabled': dirtyFlag().isDirty, 'btn-success': !dirtyFlag().isDirty()}"><i class="fa fa-download" aria-hidden="true"></i> Export Analysis to CSV</button>
 				<dashboard-results params="sources: filteredSources, analysisCohorts: analysisCohorts"></dashboard-results>
 			</div>
 

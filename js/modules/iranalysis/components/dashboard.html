@@ -1,9 +1,4 @@
 <div class="container page-header">
-    <h1>Nothing short of a dashboard</h1>
-</div>
-
-
-<div class="container page-header">
     <h3>The counts they are a-changin'</h3>
 </div>
 
@@ -13,16 +8,29 @@
     <tr>
     <th style="width: 26px"></th>
         <!-- ko foreach: analysisCohorts().outcomeCohorts -->
-        <th> <span data-bind="text: name"></span></th>
+        <th data-bind="text: name" colspan="2" style="text-align: left;"></th>
+        <!-- /ko -->
+    </tr>
+    <tr>
+        <th style="width: 26px"></th>
+        <!-- ko foreach: analysisCohorts().outcomeCohorts -->
+        <th>Cases</th>
+        <th>Persons</th>
         <!-- /ko -->
     </tr>
     </thead>
 
     <tbody data-bind="foreach: analysisCohorts().targetCohorts">
     <tr>
-        <td data-bind="text: name"></td>
-        <td>1</td>
-        <td>2</td>
+        <td nowrap data-bind="text: name"></td>
+        <!-- ko if: $component.sources()[0] -->
+            <!-- ko foreach: $component.analysisCohorts().outcomeCohorts -->
+            <!-- ko with: $component.getResults($component.sources()[0], $parent.id, id) -->
+            <td class="dataCol" data-bind="text: cases.toLocaleString()"></td>
+            <td class="dataCol" data-bind="text: totalPersons.toLocaleString()"></td>
+            <!-- /ko -->
+            <!-- /ko -->
+        <!-- /ko -->
     </tr>
     </tbody>
 </table>

@@ -1,26 +1,26 @@
 define(['knockout',
     'jquery',
     'text!./dashboard.html',
-    'webapi/IRAnalysisAPI',
     'databindings'
 ], function (
     ko,
     $,
-    template,
-    iraAPI) {
+    template) {
 
+    // TODO: reuse methods from component in results.js
     function dashboardResultsViewer(params) {
         var self = this;
 
         self.sources = params.sources;
         self.dirtyFlag = params.dirtyFlag;
         self.analysisCohorts = params.analysisCohorts;
-        self.selectedSource = ko.observable();
-        self.selectedReport = ko.observable();
-        self.rateMultiplier = ko.observable(1000);
-        self.selectedTarget = ko.observable();
-        self.selectedOutcome = ko.observable();
-        self.isLoading = ko.observable();
+
+        self.getResults = function (source, targetId, outcomeId) {
+            var summaryList = source.info().summaryList;
+            return summaryList.filter(function (item) {
+                return (item.targetId == targetId && item.outcomeId == outcomeId);
+            })[0] || {totalPersons: 0, cases: 0, timeAtRisk: 0};
+        };
 
     }
 
