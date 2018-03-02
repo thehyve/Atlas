@@ -11,7 +11,7 @@ define(['knockout',
         var self = this;
 
         self.sources = params.sources;
-        // self.sources().push({'source':{'sourceName':'Mock Source', 'sourceKey':'mock'},'info':ko.observable({'summaryList':[]})});
+        // self.sources().push({'source':{'sourceName':'Mock Source', 'sourceKey':'mock'},'info':ko.observable({'summaryList':[]})}); // Sometimes overridden, as self.sources can be refreshed from other component
         self.dirtyFlag = params.dirtyFlag;
         self.analysisCohorts = params.analysisCohorts;
         self.selectedSourceKey = ko.observable();
@@ -20,36 +20,14 @@ define(['knockout',
         self.activeMode = ko.observable("Cases");
         self.rateSteps = ko.observable(3);
 
-        self.rateMultiplier = ko.pureComputed(function() {
-            return Math.pow(10,self.rateSteps());
+        self.sources.subscribe(function() {
+            if (self.sources().length > 0)
+                self.loadDashboardData()
         });
-
-        self.rateCaption = ko.pureComputed(function() {
-            var multiplier = self.rateMultiplier();
-            if (multiplier >= 1000)
-                multiplier = (multiplier / 1000) + "k";
-
-            switch(self.activeMode()) {
-                case "Proportion":
-                    return "per " + multiplier  + " persons";
-                case "Rate":
-                    return "per " + multiplier  + " years at risk";
-                default:
-                    return "";
-            }
-        });
-
-        self.getIRdata = function (sourceKey, targetId, outcomeId) {
-            var source = self.sources().filter(function (item) {
-                return (item.source.sourceKey === sourceKey);
-            })[0];
-
-            return source.info().summaryList.filter(function (item) {
-                return (item.targetId === targetId && item.outcomeId === outcomeId);
-            })[0] || {totalPersons: 0, cases: 0, timeAtRisk: 0};
-        };
 
         self.loadDashboardData = function() {
+            self.dashboardData = ko.observableArray();
+
             self.analysisCohorts().targetCohorts().forEach(function(targetCohort) {
                 var outcomes = ko.observableArray();
                 self.analysisCohorts().outcomeCohorts().forEach(function(outcomeCohort) {
@@ -80,15 +58,48 @@ define(['knockout',
                     'targetCohortName':targetCohort.name,
                     'outcomes':outcomes
                 });
-            })
+            });
         };
 
-        if (self.sources().length > 0) {
-            // Load the results of the first source
-            self.selectedSourceKey(self.sources()[0].source.sourceKey);
-            self.loadDashboardData(0);
-        }
+        // Table may only be produced when sources are available
+        self.sourcesAvailable = ko.pureComputed(function() {
+           return self.sources().filter(function(source) { return source.info() != null; }).length > 0;
+        });
 
+        self.rateMultiplier = ko.pureComputed(function() {
+            return Math.pow(10,self.rateSteps());
+        });
+
+        self.rateCaption = ko.pureComputed(function() {
+            var multiplier = self.rateMultiplier();
+            if (multiplier >= 1000)
+                multiplier = (multiplier / 1000) + "k";
+
+            switch(self.activeMode()) {
+                case "Proportion":
+                    return "per " + multiplier  + " persons";
+                case "Rate":
+                    return "per " + multiplier  + " years at risk";
+                default:
+                    return "";
+            }
+        });
+
+        self.getIRdata = function (sourceKey, targetId, outcomeId) {
+            var source = self.sources().filter(function (item) {
+                return (item.source.sourceKey === sourceKey);
+            })[0];
+            if (!source) {
+                return {totalPersons: 0, cases: 0, timeAtRisk: 0};
+            }
+
+            return source.info().summaryList.filter(function (item) {
+                return (item.targetId === targetId && item.outcomeId === outcomeId);
+            })[0] || {totalPersons: 0, cases: 0, timeAtRisk: 0};
+        };
+
+        if (self.sources().length > 0)
+            self.loadDashboardData()
     }
 
     var component = {

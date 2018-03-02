@@ -23,13 +23,14 @@ Showing source:
     <!-- /ko -->
 </ul>
 
+<!-- ko if: sourcesAvailable -->
 <table style="width: 100%" class="sourceTable">
 
     <thead>
     <tr>
     <th style="width: 26px"></th>
         <!-- ko foreach: analysisCohorts().outcomeCohorts -->
-        <th data-bind="text: name" colspan="1" style="text-align: left;"></th>
+            <th data-bind="text: name" colspan="1" style="text-align: left;"></th>
         <!-- /ko -->
     </tr>
     </thead>
@@ -43,3 +44,4 @@ Showing source:
     </tr>
     </tbody>
 </table>
+<!-- /ko -->
