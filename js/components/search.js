@@ -56,11 +56,13 @@ define(['jquery', 'knockout', 'text!./search.html', 'vocabularyprovider', 'atlas
         }, {
 			title: 'RC',
 			data: 'RECORD_COUNT',
-			className: 'numeric'
+			className: 'numeric',
+			orderSequence: ['desc','asc']
         }, {
 			title: 'DRC',
 			data: 'DESCENDANT_RECORD_COUNT',
-			className: 'numeric'
+			className: 'numeric',
+			orderSequence: ['desc','asc']
         }, {
 			title: 'Domain',
 			data: 'DOMAIN_ID'
