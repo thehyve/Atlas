@@ -35,10 +35,10 @@ Showing source:
     </tr>
     </thead>
 
-    <tbody data-bind="foreach: dashboardData">
+    <tbody data-bind="foreach: cohortMatrix">
     <tr>
         <td nowrap data-bind="text: targetCohortName"></td>
-        <!-- ko foreach: outcomes -->
+        <!-- ko foreach: outcomeCells -->
             <td class="dataCol" data-bind="text: $data"></td>
         <!-- /ko -->
     </tr>

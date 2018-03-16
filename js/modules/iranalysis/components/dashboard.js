@@ -1,12 +1,19 @@
-define(['knockout',
-    'jquery',
-    'text!./dashboard.html',
-    'databindings'
-], function (
-    ko,
-    $,
-    template) {
-
+/*
+ * Copyright (c) 2018 The Hyve B.V.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+define(['knockout', 'text!./dashboard.html', 'databindings'], function (ko, template) {
     function dashboardResultsViewer(params) {
         var self = this;
 
@@ -15,48 +22,32 @@ define(['knockout',
         self.dirtyFlag = params.dirtyFlag;
         self.analysisCohorts = params.analysisCohorts;
         self.selectedSourceKey = ko.observable();
-        self.dashboardData = ko.observableArray();
+        self.cohortMatrix = ko.observableArray();
         self.availableModes = ko.observableArray(["Cases","Proportion","Rate"]);
         self.activeMode = ko.observable("Cases");
         self.rateSteps = ko.observable(3);
 
         self.sources.subscribe(function() {
             if (self.sources().length > 0)
-                self.loadDashboardData()
+                self.loadCohortMatrix()
         });
 
-        self.loadDashboardData = function() {
-            self.dashboardData = ko.observableArray();
-
+        self.loadCohortMatrix = function() {
+            // For each target and outcome pair, add a cell containing the cases, proportion or rate.
+            self.cohortMatrix = ko.observableArray();
             self.analysisCohorts().targetCohorts().forEach(function(targetCohort) {
-                var outcomes = ko.observableArray();
+                var outcomeCells = ko.observableArray();
                 self.analysisCohorts().outcomeCohorts().forEach(function(outcomeCohort) {
                     var cell = ko.computed(function() {
                         var irData = self.getIRdata(self.selectedSourceKey(), targetCohort.id, outcomeCohort.id);
-                        switch(self.activeMode()) {
-                            case "Cases":
-                                return irData.cases;
-                            case "Proportion":
-                                if (irData.totalPersons > 0)
-                                    return (irData.cases / irData.totalPersons * self.rateMultiplier()).toFixed(2);
-                                else
-                                    return "NA";
-                            case "Rate":
-                                if (irData.timeAtRisk > 0)
-                                    return (irData.cases / irData.timeAtRisk * self.rateMultiplier()).toFixed(2);
-                                else
-                                    return "NA";
-                            default:
-                                return "-";
-                        }
+                        return self.cellValue(irData);
                     });
-
-                    outcomes.push(cell);
+                    outcomeCells.push(cell);
                 });
 
-                self.dashboardData.push({
+                self.cohortMatrix.push({
                     'targetCohortName':targetCohort.name,
-                    'outcomes':outcomes
+                    'outcomeCells':outcomeCells
                 });
             });
         };
@@ -76,6 +67,8 @@ define(['knockout',
                 multiplier = (multiplier / 1000) + "k";
 
             switch(self.activeMode()) {
+                case "Cases":
+                    return "";
                 case "Proportion":
                     return "per " + multiplier  + " persons";
                 case "Rate":
@@ -84,6 +77,25 @@ define(['knockout',
                     return "";
             }
         });
+
+        self.cellValue = function(irData) {
+            switch(self.activeMode()) {
+                case "Cases":
+                    return irData.cases;
+                case "Proportion":
+                    if (irData.totalPersons > 0)
+                        return (irData.cases / irData.totalPersons * self.rateMultiplier()).toFixed(2);
+                    else
+                        return "NA";
+                case "Rate":
+                    if (irData.timeAtRisk > 0)
+                        return (irData.cases / irData.timeAtRisk * self.rateMultiplier()).toFixed(2);
+                    else
+                        return "NA";
+                default:
+                    return "-";
+            }
+        };
 
         self.getIRdata = function (sourceKey, targetId, outcomeId) {
             var source = self.sources().filter(function (item) {
@@ -99,7 +111,7 @@ define(['knockout',
         };
 
         if (self.sources().length > 0)
-            self.loadDashboardData()
+            self.loadCohortMatrix();
     }
 
     var component = {
