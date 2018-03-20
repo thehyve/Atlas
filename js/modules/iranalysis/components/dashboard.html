@@ -10,11 +10,11 @@ Showing source:
 
 <ul class="nav nav-pills">
     <!-- ko foreach: availableModes -->
-    <li data-bind="click: function() {$component.activeMode($data) }, css: {active: $component.activeMode() == $data };">
+    <li data-bind="click: function() {$component.selectedMode($data) }, css: {active: $component.selectedMode() == $data};">
         <a data-bind="text: $data"></a>
     </li>
     <!-- /ko -->
-    <!-- ko ifnot: activeMode() == "Cases" -->
+    <!-- ko ifnot: selectedMode() == "Cases" -->
     <li>
         <input type="range" min=1 max=5 data-bind="value: rateSteps, valueUpdate: 'input'" style="margin-top: 10px;">
     </li><li>
