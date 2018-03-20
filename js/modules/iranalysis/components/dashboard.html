@@ -25,23 +25,32 @@ Showing source:
 
 <!-- ko if: sourcesAvailable -->
 <table style="width: 100%" class="sourceTable">
-
     <thead>
-    <tr>
-    <th style="width: 26px"></th>
-        <!-- ko foreach: analysisCohorts().outcomeCohorts -->
+        <tr>
+            <th>Target</th>
+            <th>Stratify Rule</th>
+            <!-- ko foreach: outcomeCohorts -->
             <th data-bind="text: name" colspan="1" style="text-align: left;"></th>
-        <!-- /ko -->
-    </tr>
+            <!-- /ko -->
+        </tr>
     </thead>
-
-    <tbody data-bind="foreach: cohortMatrix">
-    <tr>
-        <td nowrap data-bind="text: targetCohortName"></td>
-        <!-- ko foreach: outcomeCells -->
-            <td class="dataCol" data-bind="text: $data"></td>
+    <tbody data-bind="foreach: targets">
+        <tr data-bind="click: toggleStrata">
+            <td data-bind="html: targetNameHtml"></td>
+            <td></td>
+            <!-- ko foreach: reports -->
+            <td data-bind="text: value"></td>
+            <!-- /ko -->
+        </tr>
+        <!-- ko foreach: strata -->
+        <tr data-bind="visible: $parent.doShowStrata">
+            <td></td>
+            <td data-bind="text: stratumName"></td>
+            <!-- ko foreach: reports -->
+            <td data-bind="text: value"></td>
+            <!-- /ko -->
+        </tr>
         <!-- /ko -->
-    </tr>
     </tbody>
 </table>
 <!-- /ko -->

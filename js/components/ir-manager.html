@@ -65,7 +65,7 @@
 
 			<div role="tabpanel" data-bind="css: { active: $component.activeTab() == 'generation2' },
 																			eventListener: [{ event: 'click', selector: 'button.removeResult', callback: removeResult}, {event: 'click', selector: 'button.execute', callback: onExecuteClick}]" class="tab-pane">
-				<dashboard-results params="sources: filteredSources, analysisCohorts: analysisCohorts"></dashboard-results>
+				<dashboard-results params="sources: filteredSources, analysisCohorts: analysisCohorts, strata: selectedAnalysis().expression().strata"></dashboard-results>
 			</div>
 
 			<div role="tabpanel" data-bind="css: { active: $component.activeTab() == 'utilities' }" class="tab-pane">
