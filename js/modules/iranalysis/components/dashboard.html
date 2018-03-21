@@ -27,6 +27,7 @@ Showing source:
 <table style="width: 100%" class="sourceTable">
     <thead>
         <tr>
+            <th style="width: 1em"></th>
             <th>Target</th>
             <th>Stratify Rule</th>
             <!-- ko foreach: outcomeCohorts -->
@@ -36,7 +37,8 @@ Showing source:
     </thead>
     <tbody data-bind="foreach: targets">
         <tr data-bind="click: toggleStrata">
-            <td data-bind="html: targetNameHtml"></td>
+            <td><i data-bind="attr: {class: toggleIcon}"></i></td>
+            <td data-bind="text: targetName"></td>
             <td></td>
             <!-- ko foreach: reports -->
             <td data-bind="text: value"></td>
@@ -44,6 +46,7 @@ Showing source:
         </tr>
         <!-- ko foreach: strata -->
         <tr data-bind="visible: $parent.doShowStrata">
+            <td></td>
             <td></td>
             <td data-bind="text: stratumName"></td>
             <!-- ko foreach: reports -->

@@ -17,6 +17,7 @@ define(['knockout', 'text!./dashboard.html', 'webapi/IRAnalysisAPI', 'databindin
     function dashboardResultsViewer(params) {
         var self = this;
 
+        self.analysisId = params.analysisId;
         self.sources = params.sources;
         // self.sources().push({'source':{'sourceName':'Mock Source', 'sourceKey':'mock'},'info':ko.observable({'summaryList':[]})}); // Sometimes overridden, as self.sources can be refreshed from other component
         self.dirtyFlag = params.dirtyFlag;
@@ -24,7 +25,7 @@ define(['knockout', 'text!./dashboard.html', 'webapi/IRAnalysisAPI', 'databindin
         self.outcomeCohorts = params.analysisCohorts().outcomeCohorts;
         self.strata = params.strata;
 
-        self.availableModes = ko.observableArray(["Cases","Proportion","Rate"]);
+        self.availableModes = ["Cases","Proportion","Rate"];
         self.selectedMode = ko.observable("Cases");
         self.rateSteps = ko.observable(3);
         self.selectedSourceKey = ko.observable();
@@ -34,18 +35,18 @@ define(['knockout', 'text!./dashboard.html', 'webapi/IRAnalysisAPI', 'databindin
             var self = this;
             self.id = id;
             self.targetName = name;
-            self.reports = ko.observableArray();
-            self.strata = ko.observableArray();
+            self.reports = [];
+            self.strata = [];
             self.doShowStrata = ko.observable(false);
 
-            self.targetNameHtml = ko.pureComputed(function() {
-                if (self.strata().length === 0) {
-                    return self.targetName;
+            self.toggleIcon = ko.pureComputed(function() {
+                if (self.strata.length === 0) {
+                    return "";
                 }
                 if (self.doShowStrata()) {
-                    return "<i class=\"fa fa-minus-square\"></i> " + self.targetName;
+                    return "fa fa-minus-square";
                 }
-                return "<i class=\"fa fa-plus-square\"></i> " + self.targetName;
+                return "fa fa-plus-square";
             });
 
             self.toggleStrata = function() {
@@ -65,7 +66,7 @@ define(['knockout', 'text!./dashboard.html', 'webapi/IRAnalysisAPI', 'databindin
             var self = this;
             self.id = id;
             self.stratumName = name;
-            self.reports = ko.observableArray();
+            self.reports = [];
 
             self.add = function(report) {
                 this.reports.push(report);
@@ -88,7 +89,7 @@ define(['knockout', 'text!./dashboard.html', 'webapi/IRAnalysisAPI', 'databindin
                     return {totalPersons: 0, cases: 0, timeAtRisk: 0};
                 }
 
-                // TODO: fetch the data per source
+                // Note; the stratData object is updated when source is changed.
                 if (self.stratumId != null) {
                     return master.strataData().find(function(item) {
                         return item.targetId === self.targetId
@@ -125,9 +126,10 @@ define(['knockout', 'text!./dashboard.html', 'webapi/IRAnalysisAPI', 'databindin
             });
         };
 
-        self.init = function() {
+        // Dynamically build table
+        self.load = ko.computed(function() {
             // Create table with the given number of targets, outcomes and strata.
-            self.targets = ko.observableArray();
+            self.targets = [];
             self.targetCohorts().forEach(function(targetCohort) {
                 var target = new Target(targetCohort.id, targetCohort.name);
 
@@ -147,27 +149,35 @@ define(['knockout', 'text!./dashboard.html', 'webapi/IRAnalysisAPI', 'databindin
 
                 self.targets.push(target);
             });
+        });
 
-            // For strata, retrieve the data for each target/outcome pair and every source
-            // TODO: get analysisId from a different parameter.
-            // TODO: get all data in one request (new WebApi endpoint)
-            if (self.strata().length > 0) {
+        // Dynamically retrieve strata info
+        // TODO: get all data in one request (new WebApi endpoint)
+        self.loadStrata = ko.computed(function() {
+            if (self.strata().length > 0
+                && self.selectedSourceKey() != null
+                && self.analysisId() > 0) {
                 self.targetCohorts().forEach(function(targetCohort) {
                     self.outcomeCohorts().forEach(function(outcomeCohort) {
                         iraApi.getReport(
-                            self.sources()[0].info().executionInfo.id.analysisId, // TODO
-                            "CDM5", //self.selectedSourceKey(), // TODO
+                            self.analysisId(),
+                            self.selectedSourceKey(),
                             targetCohort.id,
                             outcomeCohort.id
-                        ).then(function(report) {
+                        ).done(function(report) {
                             report.stratifyStats.forEach(function(stratifyStat) {
                                 self.strataData.push(stratifyStat);
                             });
-                        });
+                        }).fail(function(error) {
+                            // Clear strata data on error
+                            // TODO: only clear the object that failed
+                            self.strataData.removeAll();
+                        }
+                        );
                     });
                 });
             }
-        };
+        });
 
         self.selectedSource = ko.computed(function() {
             return self.sources().find(function (item) {
@@ -210,8 +220,6 @@ define(['knockout', 'text!./dashboard.html', 'webapi/IRAnalysisAPI', 'databindin
         //     if (self.sources().length > 0)
         //         self.init();
         // });
-
-        self.init();
     }
 
     var component = {
