@@ -31,7 +31,7 @@ Showing source:
             <th>Target</th>
             <th>Stratify Rule</th>
             <!-- ko foreach: outcomeCohorts -->
-            <th data-bind="text: name" colspan="1" style="text-align: left;"></th>
+            <th data-bind="text: name" style="text-align: left;"></th>
             <!-- /ko -->
         </tr>
     </thead>
@@ -41,7 +41,7 @@ Showing source:
             <td data-bind="text: targetName"></td>
             <td></td>
             <!-- ko foreach: reports -->
-            <td data-bind="text: value"></td>
+            <td class="dataCol" data-bind="text: value"></td>
             <!-- /ko -->
         </tr>
         <!-- ko foreach: strata -->
@@ -50,7 +50,7 @@ Showing source:
             <td></td>
             <td data-bind="text: stratumName"></td>
             <!-- ko foreach: reports -->
-            <td data-bind="text: value"></td>
+            <td class="dataCol" data-bind="text: value"></td>
             <!-- /ko -->
         </tr>
         <!-- /ko -->

@@ -152,31 +152,25 @@ define(['knockout', 'text!./dashboard.html', 'webapi/IRAnalysisAPI', 'databindin
         });
 
         // Dynamically retrieve strata info
-        // TODO: get all data in one request (new WebApi endpoint)
-        self.loadStrata = ko.computed(function() {
-            if (self.strata().length > 0
-                && self.selectedSourceKey() != null
-                && self.analysisId() > 0) {
-                self.targetCohorts().forEach(function(targetCohort) {
-                    self.outcomeCohorts().forEach(function(outcomeCohort) {
-                        iraApi.getReport(
-                            self.analysisId(),
-                            self.selectedSourceKey(),
-                            targetCohort.id,
-                            outcomeCohort.id
-                        ).done(function(report) {
-                            report.stratifyStats.forEach(function(stratifyStat) {
-                                self.strataData.push(stratifyStat);
-                            });
-                        }).fail(function(error) {
-                            // Clear strata data on error
-                            // TODO: only clear the object that failed
-                            self.strataData.removeAll();
-                        }
-                        );
+        self.strataLoaded = ko.computed(function() {
+            if (self.strata().length > 0 && self.selectedSourceKey() != null && self.analysisId() > 0) {
+                return iraApi.getReports(
+                    self.analysisId(),
+                    self.selectedSourceKey()
+                ).done(function(reports) {
+                    reports.forEach(function(report) {
+                        report.stratifyStats.forEach(function(stratifyStat) {
+                            self.strataData.push(stratifyStat);
+                        });
                     });
+                    return true;
+                }).fail(function() {
+                    // Clear all strata data on error
+                    self.strataData.removeAll();
+                    return false;
                 });
             }
+            return false;
         });
 
         self.selectedSource = ko.computed(function() {

@@ -122,7 +122,17 @@ define(function (require, exports) {
 			}
 		});
 		return reportPromise;
-	}	
+	}
+
+	function getReports(id, sourceKey) {
+        var reportsPromise = $.ajax({
+            url: config.webAPIRoot + 'ir/' + (id || '-1') + '/reports/' + sourceKey,
+            error: function (error) {
+                console.log("Error: " + error);
+            }
+        });
+        return reportsPromise;
+	}
 	
 	var api = {
 		getAnalysisList: getAnalysisList,
@@ -133,8 +143,9 @@ define(function (require, exports) {
 		execute: execute,
 		getInfo: getInfo,
 		deleteInfo: deleteInfo,
-		getReport: getReport
-	}
+		getReport: getReport,
+		getReports: getReports
+	};
 
 	return api;
 });
