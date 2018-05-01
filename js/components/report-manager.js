@@ -1,4 +1,10 @@
-define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbrewer', 'lodash', 'appConfig', 'knockout.dataTables.binding', 'faceted-datatable', 'colvis'], function (ko, view, d3, atlascharts, colorbrewer, _, config) {
+define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbrewer', 'lodash', 'appConfig',
+    'webapi/CohortReportingAPI', 'modules/cohortdefinition/const', 'databindings', 'faceted-datatable', 'colvis',
+		'modules/cohortdefinition/components/view/reporting/cost-utilization/persons-exposure',
+		'modules/cohortdefinition/components/view/reporting/cost-utilization/visit-util',
+    'modules/cohortdefinition/components/view/reporting/cost-utilization/drug-util'
+	],
+	function (ko, view, d3, atlascharts, colorbrewer, _, config, cohortReportingAPI, costUtilConst) {
 	function reportManager(params) {
 		var self = this;
 		self.model = params.model;
@@ -13,6 +19,8 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 			[15, 30, 45, 100, -1],
 			[15, 30, 45, 100, 'All']
 		];
+		self.visualizationPacks = cohortReportingAPI.visualizationPacks;
+		self.costUtilConst = costUtilConst;
 
 		const size4 = {
 				width: 400,
@@ -26,6 +34,38 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 				width: 1000,
 				height: 250
 			};
+		
+		self.breakpoints = {
+			wide: {
+				width: 1000,
+				height: 1000 * 0.3,
+			},
+			medium: {
+				width: 500,
+				height: 500 * 0.75,
+			},
+			narrow: {
+				width: 300,
+				height: 300 * 0.75,
+			},
+			guessFromNode: (selector) => {
+				const bounds = document.querySelector(selector).getBoundingClientRect();
+				
+				return {
+					width: bounds.width,
+					height: bounds.height,
+				};
+			},
+		};
+		
+		self.chartOptions = {
+			margins: {
+				top: 20,
+				right: 20,
+				bottom: 20,
+				left: 20,
+			},
+		};
 
 		self.buttons = ['colvis', 'copyHtml5', 'excelHtml5', 'csvHtml5', 'pdfHtml5'];
 		self.heelOptions = {
@@ -71,24 +111,29 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 		self.helpContent = ko.observable();
 
 		self.setHelpContent = function (h) {
-			switch (h) {
-				case 'condition-prevalence':
-					{
-						self.helpTitle("Condition Prevalence");
-						self.helpContent("not available");
-						break;
-					}
-				case 'year-of-birth':
-					{
-						self.helpTitle("Year of Birth");
-						self.helpContent("The number of people in this cohort shown with respect to their year of birth.");
-						break;
-					}
-				default:
-					{
-						self.helpTitle("Help Unavailable");
-						self.helpContent("Help not yet available for this topic: " + h);
-					}
+			if (typeof h === 'string') {
+        switch (h) {
+          case 'condition-prevalence':
+          {
+            self.helpTitle("Condition Prevalence");
+            self.helpContent("not available");
+            break;
+          }
+          case 'year-of-birth':
+          {
+            self.helpTitle("Year of Birth");
+            self.helpContent("The number of people in this cohort shown with respect to their year of birth.");
+            break;
+          }
+          default:
+          {
+            self.helpTitle("Help Unavailable");
+            self.helpContent("Help not yet available for this topic: " + h);
+          }
+        }
+			} else if (typeof h === 'object' && (h.helpTitle || h.name) && h.helpContent) {
+        self.helpTitle(h.helpTitle || h.name);
+        self.helpContent(h.helpContent);
 			}
 		}
 		self.heelDataColumns = [{
@@ -409,7 +454,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									trellisLabel: "Age Decile",
 									seriesLabel: "Year of Observation",
 									yLabel: "Prevalence Per 1000 People",
-									xFormat: d3.timeFormat("%Y"),
+									xFormat: d3.timeFormat("%m/%Y"),
 									yFormat: d3.format("0.2f"),
 									tickPadding: 20,
 									colors: d3.scaleOrdinal()
@@ -434,7 +479,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 											return d.xValue;
 										})),
 									xFormat: d3.timeFormat("%m/%Y"),
-									tickFormat: d3.timeFormat("%Y"),
+									tickFormat: d3.timeFormat("%m/%Y"),
 									xLabel: "Date",
 									yLabel: "Prevalence per 1000 People"
 								});
@@ -472,8 +517,11 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									});
 								}
 								boxplot.render(bpseries, "#ageAtDeath", size6.width, size6.height, {
+									yMax: d3.max(bpdata.p90Value),
+									yFormat: d3.format(',.1s'),
 									xLabel: 'Gender',
-									yLabel: 'Age at Death'
+									yLabel: 'Age at Death',
+									...self.chartOptions,
 								});
 							}
 						}
@@ -1221,7 +1269,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 											return d.xValue;
 										})),
 									xFormat: d3.timeFormat("%m/%Y"),
-									tickFormat: d3.timeFormat("%Y"),
+									tickFormat: d3.timeFormat("%m/%Y"),
 									ticks: 10,
 									xLabel: "Date",
 									yLabel: "People"
@@ -1843,7 +1891,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 											return d.xValue;
 										})),
 									xFormat: d3.timeFormat("%m/%Y"),
-									tickFormat: d3.timeFormat("%Y"),
+									tickFormat: d3.timeFormat("%m/%Y"),
 									xLabel: "Date",
 									yLabel: "Prevalence per 1000 People"
 								});
@@ -2002,7 +2050,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									trellisLabel: "Age Decile",
 									seriesLabel: "Year",
 									yLabel: "Prevalence Per 1000 People",
-									xFormat: d3.timeFormat("%Y"),
+									xFormat: d3.timeFormat("%m/%Y"),
 									yFormat: d3.format("0.1f"),
 									tickPadding: 5,
 									colors: d3.scaleOrdinal()
@@ -2136,7 +2184,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 										})),
 										xFormat: d3.timeFormat("%Y/%m/%d"),
 										yFormat: d3.format(".3f"),
-										tickFormat: d3.timeFormat("%Y"),
+										tickFormat: d3.timeFormat("%m/%Y"),
 										xLabel: "Date",
 										yLabel: "Entropy"
 									});
@@ -2147,6 +2195,20 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						}
 					});
 					break; // Entropy report
+
+				case self.visualizationPacks.healthcareUtilPersonAndExposureBaseline.name:
+        case self.visualizationPacks.healthcareUtilPersonAndExposureCohort.name:
+				case self.visualizationPacks.healthcareUtilVisitRecordsBaseline.name:
+        case self.visualizationPacks.healthcareUtilVisitDatesBaseline.name:
+        case self.visualizationPacks.healthcareUtilCareSiteDatesBaseline.name:
+        case self.visualizationPacks.healthcareUtilVisitRecordsCohort.name:
+        case self.visualizationPacks.healthcareUtilVisitDatesCohort.name:
+				case self.visualizationPacks.healthcareUtilCareSiteDatesCohort.name:
+				case self.visualizationPacks.healthcareUtilDrugBaseline.name:
+        case self.visualizationPacks.healthcareUtilDrugCohort.name:
+					self.model.loadingReport(false);
+          self.model.currentReport(self.model.reportReportName());
+          break;
 			}
 		}
 
@@ -2276,9 +2338,13 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								UIF: bpdata.p90Value[i]
 							});
 						}
-						boxplot.render(bpseries, "#ageAtFirstDiagnosis", 230, 115, {
+						const size = self.breakpoints.guessFromNode("#ageAtFirstDiagnosis");
+						boxplot.render(bpseries, "#ageAtFirstDiagnosis", size.width, self.breakpoints.wide.height, {
+							yMax: d3.max(bpdata.p90Value),
+							yFormat: d3.format(',.1s'),
 							xLabel: 'Gender',
-							yLabel: 'Age at First Diagnosis'
+							yLabel: 'Age at First Diagnosis',
+							...self.chartOptions,
 						});
 					}
 
@@ -2295,13 +2361,14 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						});
 
 						var prevalenceByMonth = new atlascharts.line();
-						prevalenceByMonth.render(byMonthSeries, "#conditionPrevalenceByMonth", 230, 115, {
+						const size = self.breakpoints.guessFromNode("#conditionPrevalenceByMonth");
+						prevalenceByMonth.render(byMonthSeries, "#conditionPrevalenceByMonth", size.width, self.breakpoints.wide.height, {
 							xScale: d3.scaleTime()
 								.domain(d3.extent(byMonthSeries[0].values, function (d) {
 									return d.xValue;
 								})),
 							xFormat: d3.timeFormat("%m/%Y"),
-							tickFormat: d3.timeFormat("%Y"),
+							tickFormat: d3.timeFormat("%m/%Y"),
 							xLabel: "Date",
 							yLabel: "Prevalence per 1000 People"
 						});
@@ -2385,18 +2452,19 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 						// create svg with range bands based on the trellis names
 						var chart = new atlascharts.trellisline();
-						chart.render(dataByDecile, "#trellisLinePlot", 400, 200, {
+						const size = self.breakpoints.guessFromNode("#trellisLinePlot");
+						chart.render(dataByDecile, "#trellisLinePlot", size.width, self.breakpoints.wide.height, {
 							trellisSet: allDeciles,
 							trellisLabel: "Age Decile",
 							seriesLabel: "Year of Observation",
 							yLabel: "Prevalence Per 1000 People",
-							xFormat: d3.timeFormat("%Y"),
+							xFormat: d3.timeFormat("%m/%Y"),
 							yFormat: d3.format("0.2f"),
 							tickPadding: 20,
 							colors: d3.scaleOrdinal()
 								.domain(["MALE", "FEMALE", "UNKNOWN"])
-								.range(["#1F78B4", "#FB9A99", "#33A02C"])
-
+								.range(["#1F78B4", "#FB9A99", "#33A02C"]),
+							...self.chartOptions,
 						});
 					}
 				}
@@ -2454,7 +2522,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									return d.xValue;
 								})),
 							xFormat: d3.timeFormat("%m/%Y"),
-							tickFormat: d3.timeFormat("%Y"),
+							tickFormat: d3.timeFormat("%m/%Y"),
 							xLabel: "Date",
 							yLabel: "Prevalence per 1000 People"
 						});
@@ -2523,7 +2591,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 							trellisLabel: "Age Decile",
 							seriesLabel: "Year of Observation",
 							yLabel: "Prevalence Per 1000 People",
-							xFormat: d3.timeFormat("%Y"),
+							xFormat: d3.timeFormat("%m/%Y"),
 							yFormat: d3.format("0.2f"),
 							tickPadding: 20,
 							colors: d3.scaleOrdinal()
@@ -2564,13 +2632,14 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						d3.selectAll("#conditioneraPrevalenceByMonth svg")
 							.remove();
 						var prevalenceByMonth = new atlascharts.line();
-						prevalenceByMonth.render(byMonthSeries, "#conditioneraPrevalenceByMonth", 230, 115, {
+						const size = self.breakpoints.guessFromNode("#conditioneraPrevalenceByMonth");
+						prevalenceByMonth.render(byMonthSeries, "#conditioneraPrevalenceByMonth", size.width, self.breakpoints.wide.height, {
 							xScale: d3.scaleTime()
 								.domain(d3.extent(byMonthSeries[0].values, function (d) {
 									return d.xValue;
 								})),
 							xFormat: d3.timeFormat("%m/%Y"),
-							tickFormat: d3.timeFormat("%Y"),
+							tickFormat: d3.timeFormat("%m/%Y"),
 							xLabel: "Date",
 							yLabel: "Prevalence per 1000 People"
 						});
@@ -2633,17 +2702,18 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 						// create svg with range bands based on the trellis names
 						var chart = new atlascharts.trellisline();
-						chart.render(dataByDecile, "#trellisLinePlot", 400, 200, {
+						const size = self.breakpoints.guessFromNode("#trellisLinePlot");
+						chart.render(dataByDecile, "#trellisLinePlot", size.width, self.breakpoints.wide.height, {
 							trellisSet: allDeciles,
 							trellisLabel: "Age Decile",
 							seriesLabel: "Year of Observation",
 							yLabel: "Prevalence Per 1000 People",
-							xFormat: d3.timeFormat("%Y"),
+							xFormat: d3.timeFormat("%m/%Y"),
 							yFormat: d3.format("0.2f"),
 							colors: d3.scaleOrdinal()
 								.domain(["MALE", "FEMALE", "UNKNOWN"])
-								.range(["#1F78B4", "#FB9A99", "#33A02C"])
-
+								.range(["#1F78B4", "#FB9A99", "#33A02C"]),
+							...self.chartOptions,
 						});
 					}
 				}
@@ -2680,15 +2750,17 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 						d3.selectAll("#drugeraPrevalenceByMonth svg")
 							.remove();
 						var prevalenceByMonth = new atlascharts.line();
-						prevalenceByMonth.render(byMonthSeries, "#drugeraPrevalenceByMonth", 400, 200, {
+						const size = self.breakpoints.guessFromNode("#drugeraPrevalenceByMonth");
+						prevalenceByMonth.render(byMonthSeries, "#drugeraPrevalenceByMonth", size.width, self.breakpoints.wide.height, {
 							xScale: d3.scaleTime()
 								.domain(d3.extent(byMonthSeries[0].values, function (d) {
 									return d.xValue;
 								})),
 							xFormat: d3.timeFormat("%m/%Y"),
-							tickFormat: d3.timeFormat("%Y"),
+							tickFormat: d3.timeFormat("%m/%Y"),
 							xLabel: "Date",
-							yLabel: "Prevalence per 1000 People"
+							yLabel: "Prevalence per 1000 People",
+							...self.chartOptions
 						});
 					}
 
@@ -2749,17 +2821,18 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 						// create svg with range bands based on the trellis names
 						var chart = new atlascharts.trellisline();
-						chart.render(dataByDecile, "#trellisLinePlot", 400, 200, {
+						const size = self.breakpoints.guessFromNode("#trellisLinePlot");
+						chart.render(dataByDecile, "#trellisLinePlot", size.width, size.breakpoints.wide.height, {
 							trellisSet: allDeciles,
 							trellisLabel: "Age Decile",
 							seriesLabel: "Year of Observation",
 							yLabel: "Prevalence Per 1000 People",
-							xFormat: d3.timeFormat("%Y"),
+							xFormat: d3.timeFormat("%m/%Y"),
 							yFormat: d3.format("0.2f"),
 							colors: d3.scaleOrdinal()
 								.domain(["MALE", "FEMALE", "UNKNOWN"])
-								.range(["#1F78B4", "#FB9A99", "#33A02C"])
-
+								.range(["#1F78B4", "#FB9A99", "#33A02C"]),
+							...self.chartOptions,
 						});
 					}
 				}
@@ -2796,9 +2869,13 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 								UIF: bpdata.p90Value[i]
 							});
 						}
-						boxplot.render(bpseries, "#ageAtFirstOccurrence", self.boxplotWidth, self.boxplotHeight, {
+						const size = self.breakpoints.guessFromNode("#ageAtFirstOccurrence");
+						boxplot.render(bpseries, "#ageAtFirstOccurrence", size.width, self.breakpoints.wide.height, {
+							yMax: d3.max(bpdata.p90Value),
+							yFormat: d3.format(',.1s'),
 							xLabel: 'Gender',
-							yLabel: 'Age at First Occurrence'
+							yLabel: 'Age at First Occurrence',
+							...self.chartOptions,
 						});
 					}
 
@@ -2818,7 +2895,7 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 									return d.xValue;
 								})),
 							xFormat: d3.timeFormat("%m/%Y"),
-							tickFormat: d3.timeFormat("%Y"),
+							tickFormat: d3.timeFormat("%m/%Y"),
 							xLabel: "Date",
 							yLabel: "Prevalence per 1000 People"
 						});
@@ -2894,18 +2971,19 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 
 						// create svg with range bands based on the trellis names
 						var chart = new atlascharts.trellisline();
-						chart.render(dataByDecile, "#trellisLinePlot", 1000, 300, {
+						const size = self.breakpoints.guessFromNode("#trellisLinePlot");
+						chart.render(dataByDecile, "#trellisLinePlot", size.width, self.breakpoints.wide.height, {
 							trellisSet: allDeciles,
 							trellisLabel: "Age Decile",
 							seriesLabel: "Year of Observation",
 							yLabel: "Prevalence Per 1000 People",
-							xFormat: d3.timeFormat("%Y"),
+							xFormat: d3.timeFormat("%m/%Y"),
 							yFormat: d3.format("0.2f"),
 							tickPadding: 20,
 							colors: d3.scaleOrdinal()
 								.domain(["MALE", "FEMALE", "UNKNOWN"])
-								.range(["#1F78B4", "#FB9A99", "#33A02C"])
-
+								.range(["#1F78B4", "#FB9A99", "#33A02C"]),
+							...self.chartOptions,
 						});
 					}
 				}
@@ -3374,11 +3452,13 @@ define(['knockout', 'text!./report-manager.html', 'd3', 'atlascharts', 'colorbre
 					});
 					yMax = Math.max(yMax, bpdata.p90Value[i]);
 				}
-
-				boxplot.render(bpseries, target, width, height, {
+				const size = self.breakpoints.guessFromNode(target);
+				boxplot.render(bpseries, target, size.width, self.breakpoints.wide.height, {
 					yMax: yMax,
+					yFormat: d3.format(',.1s'),
 					xLabel: xlabel,
-					yLabel: ylabel
+					yLabel: ylabel,
+					...self.chartOptions,
 				});
 			}
 		}

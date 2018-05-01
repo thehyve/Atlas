@@ -13,7 +13,10 @@ define(['optional!config-local'], function (localConfig) {
 	config.userAuthenticationEnabled = false;
 	config.plpResultsEnabled = false;
 	config.useExecutionEngine = false;
+	config.viewProfileDates = false;
+	config.enableCosts = false;
 	config.supportUrl = "https://github.com/ohdsi/atlas/issues";
+	config.supportMail = "atlasadmin@your.org";
 	config.authProviders = [
     {
       "name": "Windows",
@@ -66,7 +69,23 @@ define(['optional!config-local'], function (localConfig) {
       "icon": "fa fa-cubes",
       "isUseCredentialsForm": true
     }
-	];
+  ];
+  config.xssOptions = {
+    "whiteList": {
+      "a": ["href", "class", "data-bind"],
+			"button": ["class", "type"],
+      "span": ["class", "data-bind"],
+      "i": ["class", "id", "aria-hidden"],
+      "div": ["class", "style", "id"],
+      "option": ["value"],
+      "input": ["type", "class"],
+      "ui": ["class"],
+      "path": ["d", "class"],
+      "br": "",
+    },
+    "stripIgnoreTag": true,
+    "stripIgnoreTagBody": ['script'],
+  };
 
 	Object.assign(config, localConfig);
 	config.webAPIRoot = config.api.url;

@@ -1,4 +1,4 @@
-define(['jquery', 'knockout', 'datatables.net'], function ($, ko) {
+define(['jquery', 'knockout', 'datatables.net', 'appConfig', 'xss', 'datatables.net-buttons','datatables.net-buttons-html5'], function ($, ko, dataTables, config, filterXSS) {
 
 	function renderSelected(s, p, d) {
 		return '<span class="fa fa-check-circle"></span>';
@@ -17,29 +17,70 @@ define(['jquery', 'knockout', 'datatables.net'], function ($, ko) {
 		
 		return selectedData;
 	}
-	
+
+  function isUrlAbsolute(url) {
+    return (url.indexOf('://') > 0 || url.indexOf('//') === 0);
+  }
+
+  function filterAbsoluteUrls(html) {
+    return html.replace(/href="([^"]*)"|href='([^']*)'/g, function(match, p1, p2)
+    	{
+        const link = p1 || p2;
+        if (isUrlAbsolute(link)) {
+        	return match.replace(link, '#' + link);
+        }
+        return match;
+      }
+    );
+	}
+
 	ko.bindingHandlers.dataTable = {
 	
-		init: function (element, valueAccessor) {
-			
+		init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
 			
 			var binding = ko.utils.unwrapObservable(valueAccessor());
-
 			// If the binding is an object with an options field,
 			// initialise the dataTable with those options.
 			if (binding.options) {
+				
 				// allow row level binding context
-				binding.options.createdRow = function (row, data, index) {
-					ko.applyBindings(data, row)
+				const createdRow = binding.options.createdRow;  
+				binding.options.createdRow = (row, data, index) => {
+					if (createdRow) {
+						createdRow(row, data, index);
+					}
+					ko.cleanNode(row);
+					ko.applyBindings(bindingContext.createChildContext(data), row);
 				};
 				// test for 'select' column (must be first column in column definition
-				if (binding.options.columns && binding.options.columns[0] == 'select') {
-					binding.options.columns[0] = { width:'20px', orderable: false, class: 'select', render: renderSelected }	
+				const columns = binding.options.columns;
+				
+				if (columns && columns[0] == 'select') {
+					columns[0] = { width:'20px', orderable: false, class: 'select', render: renderSelected }	
 					$(element).on("click","td > span.fa.fa-check-circle", function () {
 						$(this).toggleClass('selected');
-						console.log(this);
 					});
 				}
+				
+				const xssOptions = config.xssOptions;
+
+				binding.options.columns = columns.map((column) => {
+					const originalRender = column.render;
+					const originalDataAccessor = column.data;
+					const hasOriginalRender = typeof originalRender === 'function';
+					const hasDataAccessor = typeof originalDataAccessor === 'function';
+					
+					return Object.assign({}, column, {
+						data: hasDataAccessor
+							? d => filterAbsoluteUrls(filterXSS(originalDataAccessor(d), xssOptions))
+							: filterAbsoluteUrls(filterXSS(originalDataAccessor, xssOptions)),
+						render: hasOriginalRender
+							? (s, p, d) => filterAbsoluteUrls(filterXSS(originalRender(s, p, d), xssOptions))
+              // https://datatables.net/reference/option/columns.render
+              // "render" property having "string" or "object" data type is not obvious for filtering, so do not pass such things to UI for now
+							: undefined
+					});
+				});
 
 				$(element).DataTable(binding.options);
 				
@@ -72,7 +113,7 @@ define(['jquery', 'knockout', 'datatables.net'], function ($, ko) {
 				{
 					if (this._DT_RowIndex != null)
 					{
-						binding.onRowClick(data[this._DT_RowIndex], evt);
+						binding.onRowClick(data[this._DT_RowIndex], evt, this);
 					}
 				});
 			}
