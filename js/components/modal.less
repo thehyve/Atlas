@@ -1,0 +1,16 @@
+.atlas-modal {
+	&__modal-dialog {
+		width: 80rem;
+	}
+	&__modal-body {
+		padding: 1rem;
+	}
+
+	&--unclosable {
+		pointer-events: none;
+
+		& .modal-content {
+			pointer-events: all;
+		}
+	}
+}

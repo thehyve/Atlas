@@ -3,18 +3,29 @@ define(['knockout',
 	'appConfig',
 	'webapi/EvidenceAPI',
 	'webapi/CDMResultsAPI',
-	'webapi/ConceptSetAPI',
+	'services/ConceptSet',
 	'atlas-state',
 	'job/jobDetail',
   'webapi/MomentAPI',
-	'ohdsi.util',
+	'webapi/AuthAPI',
+	'assets/ohdsi.util',
 	'databindings'
-], function (ko, view, config, evidenceAPI, cdmResultsAPI, conceptSetAPI, sharedState, jobDetail, momentApi) {
+], function (
+	ko,
+	view,
+	config,
+	evidenceAPI,
+	cdmResultsAPI,
+	conceptSetService,
+	sharedState,
+	jobDetail,
+	momentApi,
+	authApi
+) {
 	function negativeControls(params) {
 		var self = this;
 
 		var pollTimeout = null;
-		var authApi = params.model.authApi;
 		self.model = params.model;
 		self.selectedConcepts = params.selectedConcepts;
 		self.conceptSet = params.conceptSet;
@@ -345,7 +356,7 @@ define(['knockout',
 				clearTimeout(pollTimeout);
 
 			var id = self.conceptSet().id;
-			conceptSetAPI.getGenerationInfo(id)
+			conceptSetService.getGenerationInfo(id)
 				.then(function (infoList) {
 					var hasPending = false;
 					console.log("poll for evidence....")
@@ -497,7 +508,7 @@ define(['knockout',
 
 		self.getEvidenceSources = function () {
 			self.loadingEvidenceSources(true);
-			var resolvingPromise = conceptSetAPI.getGenerationInfo(self.conceptSet()
+			var resolvingPromise = conceptSetService.getGenerationInfo(self.conceptSet()
 				.id);
 			$.when(resolvingPromise)
 				.done(function (generationInfo) {
@@ -519,14 +530,14 @@ define(['knockout',
 							
 							csToIncludePromise = $.Deferred();
 							if (evidenceSources[i].csToInclude() > 0) {
-								csToIncludePromise = conceptSetAPI.getConceptSet(evidenceSources[i].csToInclude());
+								csToIncludePromise = conceptSetService.getConceptSet(evidenceSources[i].csToInclude());
 							} else {
 								csToIncludePromise.resolve();
 								evidenceSources[i].csToIncludeLoading(false);
 							}
 							csToExcludePromise = $.Deferred();
 							if (evidenceSources[i].csToExclude() > 0) {
-								csToExcludePromise = conceptSetAPI.getConceptSet(evidenceSources[i].csToExclude());
+								csToExcludePromise = conceptSetService.getConceptSet(evidenceSources[i].csToExclude());
 							} else {
 								csToExcludePromise.resolve();
 								evidenceSources[i].csToExcludeLoading(false);
@@ -706,7 +717,7 @@ define(['knockout',
 		
 		self.conceptsetSelected = function(d) {
 			$('#ncModalConceptSetSelect').modal('hide');
-			conceptSetAPI.getConceptSet(d.id).then(function (csInfo) {
+			conceptSetService.getConceptSet(d.id).then(function (csInfo) {
 				self.csTarget(csInfo.id);
 				self.csTargetCaption(csInfo.name);
 				/*

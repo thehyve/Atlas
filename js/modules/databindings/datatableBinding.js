@@ -1,4 +1,4 @@
-define(['jquery', 'knockout', 'datatables.net', 'appConfig', 'xss', 'datatables.net-buttons','datatables.net-buttons-html5'], function ($, ko, dataTables, config, filterXSS) {
+define(['jquery', 'knockout', 'datatables.net', 'appConfig', 'xss', 'datatables.net-buttons', 'colvis', 'datatables.net-buttons-html5'], function ($, ko, dataTables, config, filterXSS) {
 
 	function renderSelected(s, p, d) {
 		return '<span class="fa fa-check-circle"></span>';
@@ -34,10 +34,24 @@ define(['jquery', 'knockout', 'datatables.net', 'appConfig', 'xss', 'datatables.
     );
 	}
 
+	function sortAbs(x, y) {
+        const abxX = Math.abs(x);
+        const absY = Math.abs(y);
+        return abxX < absY ? -1 : abxX>absY ? 1 : 0;
+	}
+
 	ko.bindingHandlers.dataTable = {
 	
 		init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
-			
+
+            jQuery.fn.dataTableExt.oSort["numberAbs-desc"] = function(x, y) {
+                return -1 * sortAbs(x, y);
+            };
+
+            jQuery.fn.dataTableExt.oSort["numberAbs-asc"] = function(x, y) {
+                return sortAbs(x, y);
+            }
+
 			var binding = ko.utils.unwrapObservable(valueAccessor());
 			// If the binding is an object with an options field,
 			// initialise the dataTable with those options.
@@ -82,6 +96,11 @@ define(['jquery', 'knockout', 'datatables.net', 'appConfig', 'xss', 'datatables.
 					});
 				});
 
+				// For case of complex header which uses data-bindings (https://datatables.net/examples/advanced_init/complex_header.html)
+				if ($(element).find('thead')[0]) {
+					ko.applyBindings(bindingContext, $(element).find('thead')[0]);
+				}
+
 				$(element).DataTable(binding.options);
 				
 				if (binding.api != null)
@@ -113,7 +132,7 @@ define(['jquery', 'knockout', 'datatables.net', 'appConfig', 'xss', 'datatables.
 				{
 					if (this._DT_RowIndex != null)
 					{
-						binding.onRowClick(data[this._DT_RowIndex], evt, this);
+						binding.onRowClick(data[this._DT_RowIndex], evt, this, this._DT_RowIndex);
 					}
 				});
 			}

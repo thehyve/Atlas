@@ -10,8 +10,11 @@ table.cohort-generate-sources td {
 
 table.cohort-generate-sources tbody.overflow {
   display: block;
-  max-height: 210px;
   overflow: auto;
+}
+
+table.cohort-generate-sources tbody.max-height {
+  max-height: 210px;
 }
 
 table.cohort-generate-sources thead, table.cohort-generate-sources tbody tr {
@@ -59,46 +62,12 @@ table.cohort-generate-sources thead {
   text-decoration: none;
 }
 
-body.splash {
-  font-size: 12px;
-  margin: 0px;
-  padding: 0px;
-  background: none;
-}
-
 body {
   font-size: 12px;
   /* researched font stack used by github */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
-#wrapperLeftMenu {
-  position: fixed;
-  left: 0px;
-  top: 0px;
-  width: 150px;
-  bottom: 0;
-  background-color: #003142;
-  border-right: solid 1px #888;
-}
-
-#wrapperLeftMenu a.list-group-item {
-  color: #fff;
-}
-
-#wrapperLeftMenu .list-group-item {
-  position: relative;
-  display: block;
-  padding: 5px 5px;
-  margin-bottom: 1px;
-  background-color: #003142;
-  border: none;
-  border-bottom: solid 1px #333;
-}
-
-#wrapperLeftMenu .list-group-item:hover {
-  background-color: #005471;
-}
 
 .importedTable {
   padding: 10px;
@@ -109,6 +78,10 @@ body {
   color: #000;
   font-weight: normal;
   margin: 12px 0px 3px 0px;
+}
+
+.heading.strong {
+  font-weight: bold;
 }
 
 .subheading {
@@ -265,7 +238,7 @@ pre span.key {
 
 #wrapperMainWindow {
   position: absolute;
-  left: 149px;
+  left: 174px;
   top: 0px;
   right: 0px;
   height: 100%;
@@ -288,10 +261,6 @@ pre span.key {
 
 .panel-heading a {
   color: #003142;
-}
-
-#wrapperLeftMenu .panel {
-  border: 0px;
 }
 
 .wrapperTitle {
@@ -336,11 +305,6 @@ pre span.key {
   left: 35px;
 }
 
-#wrapperLeftMenu ul {
-  padding: 0px;
-  margin-bottom: 0px;
-}
-
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {
   background-color: #FFFFFF;
   color: #003142;
@@ -360,18 +324,7 @@ pre span.key {
   line-height: 14px;
 }
 
-#wrapperLeftMenu li a {
-  color: #FFFFFF;
-  text-decoration: none;
-}
 
-#wrapperLeftMenu li a:hover {
-  text-decoration: none;
-}
-
-#wrapperLeftMenu li ul {
-  padding-left: 10px;
-}
 
 .feFilter {
   padding-left: 0px;
@@ -663,6 +616,11 @@ ul.ColVis_collection li {
   background: #eee;
 }
 
+.conceptTable div.swatch {
+  width: 12px;
+  height: 12px;
+}
+
 .linkLegend {
   padding: 10px 10px 15px 10px;
   clear: both;
@@ -800,9 +758,9 @@ ul.ColVis_collection li {
   width: 200px;
 }
 
-#wrapperLeftMenu i.fa {
-  /* line-height: 7px; */
-}
+/*#wrapperLeftMenu i.fa {
+   line-height: 7px; 
+}*/
 
 #wrapperReportMenu {
   margin: 5px;
@@ -904,6 +862,11 @@ div.loader {
 
 .tab-content {
   padding: 2px 2px 15px 2px;
+  background-color: #fff;
+}
+
+.tab-content.nospace {
+  padding: 0px;
   background-color: #fff;
 }
 
@@ -1055,6 +1018,15 @@ ul.nav.nav-tabs {
   clear: right;
 }
 
+ul.nav.nav-tabs.nospace {
+  margin-bottom: 0px;
+  background-color: #333;
+  padding: 2px 2px, 1px, 2px;
+  border-bottom: solid 1px #FFFFFF;
+  clear: right;
+}
+
+
 ul.nav.nav-tabs {
   white-space: nowrap;
 }
@@ -1163,16 +1135,6 @@ ul.nav.nav-tabs {
   margin-bottom: 0px;
 }
 
-.list-group-item:first-child {
-  border-top-right-radius: 0;
-  border-top-left-radius: 0
-}
-
-.list-group-item:last-child {
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0
-}
-
 .panel {
   border-radius: 0;
   /* box-shadow: none; */
@@ -1238,44 +1200,6 @@ ul.nav.nav-tabs {
 
 .carousel-caption {
   text-shadow: none
-}
-
-div#stage {
-  margin-right: auto;
-  margin-left: auto;
-  margin-top: 25px;
-  width: 400px;
-}
-
-div#stage img {
-  width: 400px;
-  height: 500px;
-}
-
-#splash {
-  padding-top: 50px;
-}
-
-#splash #heading {
-  color: #20425A;
-  font-size: 20px;
-  text-align: center;
-  font-variant: small-caps;
-  padding-top: 10px;
-  letter-spacing: 5px;
-}
-
-#splash #status {
-  color: #A5B3BD;
-  font-size: 14px;
-  text-align: center;
-  font-variant: small-caps;
-  padding-top: 10px;
-}
-
-#splash a, #splash a:hover {
-  text-shadow: #888 1px 1px 1px;
-  text-decoration: none;
 }
 
 #wrapperLogo a, #wrapperLogo a:hover {
@@ -1394,9 +1318,9 @@ circle.child {
   /* margin-bottom: 10px; */
 }
 
-#wrapperLeftMenu li a {
+/*#wrapperLeftMenu li a {
   cursor: pointer;
-}
+}*/
 
 .overlay {
   fill: none;
@@ -1579,10 +1503,10 @@ textarea.code {
   margin-bottom: 15px;
 }
 
-#wrapperLeftMenu li {
+/*#wrapperLeftMenu li {
   border-bottom: solid 1px #333;
   padding: 4px;
-}
+}*/
 
 .asset-heading input {
   width: 500px;
@@ -1604,8 +1528,14 @@ li.current-asset {
   padding: 2px 0px 2px 10px;
 }
 
-#wrapperLeftMenu li.current-asset a {
+/*#wrapperLeftMenu li.current-asset a {
   color: #000;
+}*/
+
+.configureSourceTable button.connection-check-button {
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 2px;
 }
 
 .configureSourceTable i.fa.fa-spinner.fa-spin {
@@ -1795,13 +1725,13 @@ cohort-comparison-manager .row .btn {
   font-weight: bold;
 }
 
-#wrapperLeftMenu li:hover {
+/*#wrapperLeftMenu li:hover {
   background-color: #093646;
 }
 
 #wrapperLeftMenu li.current-asset:hover {
   background-color: #fff;
-}
+}*/
 
 .breadcrumb-container a {
   color: #ccc;
@@ -1950,7 +1880,6 @@ span.new-role {
 }
 
 .user-bar-container {
-  width: 300px;
   height: 34px;
   float: right;
 }
@@ -2107,7 +2036,7 @@ button i.fa.fa-question-circle {
 
 div#wrapper_ohdsi {
   background-color: #eee;
-  width:150px;
+  width:175px;
   position: absolute;
   text-align: center;
   font-size: 12px;
@@ -2170,11 +2099,32 @@ div#wrapper_ohdsi a {
   margin-bottom: 30px;
 }
 
-.command-pane {
-  display: flex;
-}
-
 #report {
   overflow-y: scroll;
   flex-grow: 1;
+}
+
+.editor-back-icon {
+  width: 50px;
+  float: left;
+  border-radius: 4px;
+  color: #454D57;
+  border: 1px solid #CBCED1;
+  padding-left: 3px;
+  padding-right: 3px; 
+  padding-bottom: 5px;
+  padding-top: 5px;
+  background-color: #F2F3F4;
+  text-align: center;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.editor-container {
+  border-top: 2px solid #485563;
+}
+
+.editor-heading {
+  font-weight: bold;
+  height: 17px;
 }

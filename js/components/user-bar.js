@@ -1,11 +1,73 @@
-define(['knockout', 'text!./user-bar.html', 'appConfig', 'atlas-state'], function (ko, view, appConfig, state) {
-	function userBar(params) {
-		var self = this;
-		var authApi = params.model.authApi;
+define([
+	'knockout',
+	'text!./user-bar.html',
+	'appConfig',
+	'atlas-state',
+	'providers/Component',
+	'utils/CommonUtils',
+	'webapi/AuthAPI',
+	'less!./user-bar.less'
+], function (
+	ko,
+	view,
+	appConfig,
+	state,
+	Component,
+	commonUtils,
+	authApi
+) {
+	class UserBar extends Component {
+		constructor(params) {
+			super(params);			
+			this.model = params.model;
+			this.appConfig = appConfig;
+			this.token = authApi.token;
+			this.tokenExpired = authApi.tokenExpired;    
+			this.authLogin = authApi.subject;		
+			this.pollInterval = null;
+			this.isLoggedIn = ko.computed(() => {
+				return authApi.isAuthenticated();
+			});
+			this.loading = params.model.loading;
 
-		self.updateJobStatus = function () {
-			if (self.jobListing().length > 0) {
-				self.jobListing().forEach(job => {
+			this.startPolling = () => {
+				this.pollInterval = setInterval(this.updateJobStatus, appConfig.pollInterval);
+			}
+
+			this.stopPolling = () => {
+				clearInterval(this.pollInterval);
+			}
+
+			this.isLoggedIn.subscribe((isLoggedIn) => {
+				if (isLoggedIn) {
+					this.startPolling();
+				} else {
+					this.stopPolling();
+				}
+			});
+			
+			this.showJobModal = ko.observable(false);
+			this.jobListing = state.jobListing;
+
+			this.jobNotificationsPending = ko.computed(() => {
+				var unviewedNotificationCount = this.jobListing().filter(j => {
+					return !j.viewed();
+				}).length;
+				return unviewedNotificationCount;
+			});
+
+			this.updateJobStatus = this.updateJobStatus.bind(this);
+			this.clearJobNotifications = this.clearJobNotifications.bind(this);
+			this.clearJobNotificationsPending = this.clearJobNotificationsPending.bind(this);
+
+			if (!appConfig.userAuthenticationEnabled) {
+				this.startPolling();
+			}
+		}
+
+		updateJobStatus () {
+			if (this.jobListing().length > 0) {
+				this.jobListing().forEach(job => {
 					if (job.isComplete() || job.isFailed()) {
 						return;
 					}
@@ -13,11 +75,12 @@ define(['knockout', 'text!./user-bar.html', 'appConfig', 'atlas-state'], functio
 					if (job.progressUrl) {
 						$.ajax(job.progressUrl, {
 							context: job,
-							success: function (progressData) {
-								if (job.progress() != progressData.length) {
-									job.progress(progressData[job.progressValue]);
+							success: (progressData) => {
+								if (job.progress() != progressData.progress) {
+									var currentStatus = job.getStatusFromResponse(progressData);
+									job.status(currentStatus);
 									job.viewed(false);
-									self.jobListing.valueHasMutated();
+									this.jobListing.valueHasMutated();
 								}
 							}
 						});
@@ -26,13 +89,13 @@ define(['knockout', 'text!./user-bar.html', 'appConfig', 'atlas-state'], functio
 					if (job.statusUrl) {
 						$.ajax(job.statusUrl, {
 							context: job,
-							success: function (statusData) {
+							success: (statusData) => {
 								var currentStatus = job.getStatusFromResponse(statusData);
 								//console.log(job.executionUniqueId() + "::" + currentStatus);
 								if (job.status() != currentStatus) {
 									job.status(currentStatus);
 									job.viewed(false);
-									self.jobListing.valueHasMutated();
+									this.jobListing.valueHasMutated();
 								}
 							}
 						});
@@ -41,52 +104,26 @@ define(['knockout', 'text!./user-bar.html', 'appConfig', 'atlas-state'], functio
 			}
 		};
 
-		self.calculateProgress = function (j) {
+		calculateProgress (j) {
 			return Math.round(j.progress() / j.progressMax * 100) + '%';
 		}
-
-		setInterval(self.updateJobStatus, 60000);
-
-		self.showJobModal = ko.observable(false);
-		self.jobListing = state.jobListing;
-
-		self.clearJobNotifications = function () {
-			self.jobListing.removeAll();
+		
+		clearJobNotifications () {
+			this.jobListing.removeAll();
 		}
 
-		self.clearJobNotificationsPending = function () {
-			self.jobListing().forEach(j => {
+		clearJobNotificationsPending () {
+			this.jobListing().forEach(j => {
 				j.viewed(true);
 			});
-			self.jobListing.valueHasMutated();
+			this.jobListing.valueHasMutated();
 		}
-
-		self.jobNotificationsPending = ko.computed(function () {
-			var unviewedNotificationCount = self.jobListing().filter(j => {
-				return !j.viewed();
-			}).length;
-			return unviewedNotificationCount;
-		});
 		
-		self.jobNameClick = function(j) {
+		jobNameClick (j) {
 			$('#jobModal').modal('hide');
 			window.location = '#/' + j.url;
 		}
-
-		self.appConfig = appConfig;
-		self.token = authApi.token;
-		self.authLogin = authApi.subject;		
-		self.isLoggedIn = ko.computed(function () {
-			if (!self.token()) return null;
-			return authApi.isAuthenticated();
-		});
 	}
 
-	var component = {
-		viewModel: userBar,
-		template: view
-	};
-
-	ko.components.register('user-bar', component);
-	return component;
+	return commonUtils.build('user-bar', UserBar, view);
 });

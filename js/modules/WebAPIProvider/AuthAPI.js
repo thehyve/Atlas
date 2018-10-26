@@ -6,6 +6,7 @@ define(function(require, exports) {
     var cookie = require('webapi/CookieAPI');
     var TOKEN_HEADER = 'Bearer';
     var LOCAL_STORAGE_PERMISSIONS_KEY = "permissions";
+    const httpService = require('services/http');
 
     var authProviders = config.authProviders.reduce(function(result, current) {
         result[config.api.url + current.url] = current;
@@ -16,34 +17,93 @@ define(function(require, exports) {
         return config.webAPIRoot;
     };
 
-    var tokenExpirationDate = ko.pureComputed(function() {
-        if (!token()) {
-            return null;
-        }
-
-        var expirationInSeconds = parseJwtPayload(token()).exp;
-        return new Date(expirationInSeconds * 1000);
-
-    });
-    var permissions = function() {
-        var permissionsString = localStorage.getItem(LOCAL_STORAGE_PERMISSIONS_KEY);
-        if (!permissionsString) {
-            return null;
-        }
-
-        return permissionsString.split('|');
-    };
-    var subject = ko.pureComputed(function() {
-        return token()
-            ? parseJwtPayload(token()).sub
-            : null;
-    });
     var token = ko.observable();
     if (localStorage.bearerToken && localStorage.bearerToken != 'null') {
         token(localStorage.bearerToken);
     } else {
         token(null);
     }
+
+    var getAuthorizationHeader = function () {
+        if (!token()) {
+            return null;
+        }
+        return TOKEN_HEADER + ' ' + token();
+    };
+
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!authProviders[settings.url] && settings.url.startsWith(config.api.url)) {
+                xhr.setRequestHeader('Authorization', getAuthorizationHeader());
+            }
+        }
+    });
+
+    var subject = ko.observable();
+    var permissions = ko.observable();
+
+    const loadUserInfo = function() {
+        return $.ajax({
+            url: config.api.url + 'user/me',
+            method: 'GET',
+            success: function (info) {
+                subject(info.login);
+                permissions(info.permissions.map(p => p.permission));
+            },
+            error: function (err) {
+                console.log('User is not authed');
+                subject(null);
+            }
+        });
+    };
+
+    if (config.userAuthenticationEnabled) {
+        loadUserInfo();
+    }
+
+    var tokenExpirationDate = ko.pureComputed(function() {
+        if (!token()) {
+            return null;
+        }
+
+        try {
+            var expirationInSeconds = parseJwtPayload(token()).exp;
+            return new Date(expirationInSeconds * 1000);
+        } catch (e) {
+            return new Date();
+        }
+
+    });
+
+    const tokenExpired = ko.observable(false);
+    const askLoginOnTokenExpire = (function() {
+        let expirationTimeout;
+        return () => {
+            if (expirationTimeout) {
+                clearTimeout(expirationTimeout);
+            }
+            if (!token()) {
+                tokenExpired(false);
+                return;
+            }
+            if (tokenExpirationDate() > new Date()) {
+                tokenExpired(false);
+                expirationTimeout = setTimeout(
+                    () => {
+                        tokenExpired(true);
+                        $('#myModal').modal('show');
+                        expirationTimeout = null;
+                    },
+                    tokenExpirationDate() - new Date()
+                );
+            } else {
+                tokenExpired(true);
+            }
+        }
+    })();
+
+    askLoginOnTokenExpire();
+    tokenExpirationDate.subscribe(askLoginOnTokenExpire);
 
     window.addEventListener('storage', function(event) {
         if (event.storageArea === localStorage && localStorage.bearerToken !== token()) {
@@ -56,28 +116,13 @@ define(function(require, exports) {
         cookie.setField("bearerToken", newValue);
     });
 
-    var isAuthenticated = ko.pureComputed(function() {
-      try {
+    var isAuthenticated = ko.computed(() => {
         if (!config.userAuthenticationEnabled) {
-          return true;
+            return true;
         }
 
-        if (!token() && token() !== 'undefined') {
-          return false;
-        }
-
-        return new Date() < tokenExpirationDate();
-      }catch(e) {
-        return false;
-      }
+        return !!subject();
     });
-
-    var getAuthorizationHeader = function () {
-        if (!token()) {
-            return null;
-        }
-        return TOKEN_HEADER + ' ' + token();
-    };
 
     var handleAccessDenied = function(xhr) {
         switch (xhr.status) {
@@ -120,6 +165,10 @@ define(function(require, exports) {
     };
 
     var isPermitted = function (permission) {
+        if (!config.userAuthenticationEnabled) {
+            return true;
+        }
+
         var etalons = permissions();
         if (!etalons) {
             return false;
@@ -134,7 +183,7 @@ define(function(require, exports) {
         return false;
     };
 
-    var base64urldecode = function (arg) {
+    function base64urldecode(arg) {
         var s = arg;
         s = s.replace(/-/g, '+'); // 62nd char of encoding
         s = s.replace(/_/g, '/'); // 63rd char of encoding
@@ -148,7 +197,7 @@ define(function(require, exports) {
         return window.atob(s); // Standard base64 decoder
     };
 
-    var parseJwtPayload = function (jwt) {
+    function parseJwtPayload(jwt) {
         var parts = jwt.split(".");
         if (parts.length != 3) {
             throw new Error("JSON Web Token must have three parts");
@@ -165,23 +214,13 @@ define(function(require, exports) {
     var refreshToken = function() {
 
         if (!isPromisePending(refreshTokenPromise)) {
-            refreshTokenPromise = $.ajax({
-                url: getServiceUrl() + "user/refresh",
-                method: 'GET',
-                headers: {
-                    Authorization: getAuthorizationHeader()
-                },
-
-            }).then(
-                // success
-                function (data, textStatus, jqXHR) {
-                    setAuthParams(jqXHR);
-                },
-                // error
-                function (error) {
-                    resetAuthParams();
-                },
-            );
+          refreshTokenPromise = httpService.doGet(getServiceUrl() + "user/refresh");
+          refreshTokenPromise.then(({ data, headers }) => {
+            setAuthParams(headers.get(TOKEN_HEADER));
+          });
+          refreshTokenPromise.catch(() => {
+            resetAuthParams();
+          });
         }
 
         return refreshTokenPromise;
@@ -215,8 +254,12 @@ define(function(require, exports) {
       return isPermitted('ir:post');
     };
 
-    var isPermittedDeleteIR = function(id){
+    var isPermittedDeleteIR = function(id) {
         return isPermitted('ir:' + id + ':delete');
+    };
+    
+    var isPermittedCopyIR = function(id) {
+        return isPermitted('ir:' + id + ':copy:get');
     };
 
     var isPermittedReadEstimations = function () {
@@ -235,6 +278,10 @@ define(function(require, exports) {
         return isPermitted('comparativecohortanalysis:post');
     };
 
+    const isPermittedDeleteEstimation = function(id) {
+        return isPermitted(`comparativecohortanalysis:${id}:delete`);
+    }
+
     var isPermittedReadPlps = function() {
         return isPermitted('plp:get');
     };
@@ -250,6 +297,10 @@ define(function(require, exports) {
     var isPermittedDeletePlp = function(id) {
         return isPermitted('plp:' + id + ':delete');
     };
+
+    var isPermittedCopyPlp = function(id) {
+        return isPermitted(`plp:${id}:copy:get`);
+    }
 
     var isPermittedSearch = function() {
       return isPermitted('vocabulary:*:search:*:get');
@@ -319,6 +370,10 @@ define(function(require, exports) {
         return isPermitted('source:' + key + ':get');
     }
 
+    var isPermittedCheckSourceConnection = function(key) {
+      return isPermitted('source:connection:' + key + ':get');
+    }
+
     var isPermittedEditSource = function(key) {
         return isPermitted('source:' + key + ':put');
     }
@@ -355,33 +410,26 @@ define(function(require, exports) {
         return isPermitted('role:' + roleId + ':permissions:*:put') && isPermitted('role:' + roleId + ':permissions:*:delete');
     }
 
-    $.ajaxSetup({
-        beforeSend: function(xhr, settings) {
-          if (!authProviders[settings.url] && settings.url.startsWith(config.api.url)) {
-            xhr.setRequestHeader('Authorization', getAuthorizationHeader());
-          }
-        }
-    });
+		const isPermittedImportUsers = function() {
+			return isPermitted('user:import:post') && isPermitted('user:import:*:post');
+		}
 
-    var setPermissions = function (permissions) {
-      localStorage.setItem(LOCAL_STORAGE_PERMISSIONS_KEY, permissions);
-    };
-
-    var setAuthParams = function (jqXHR) {
-        var permissions = jqXHR.responseJSON.permissions;
-        setPermissions(permissions);
-        token(jqXHR.getResponseHeader(TOKEN_HEADER));
+	var setAuthParams = function (tokenHeader) {
+        token(tokenHeader);
+        loadUserInfo();
     };
 
     var resetAuthParams = function () {
-        setPermissions(null);
         token(null);
+        subject(null);
+        permissions(null);
     };
 
     var api = {
         token: token,
         subject: subject,
         tokenExpirationDate: tokenExpirationDate,
+        tokenExpired: tokenExpired,
         setAuthParams: setAuthParams,
         resetAuthParams: resetAuthParams,
         getAuthorizationHeader: getAuthorizationHeader,
@@ -389,6 +437,7 @@ define(function(require, exports) {
         refreshToken: refreshToken,
 
         isAuthenticated: isAuthenticated,
+        isPermitted: isPermitted,
 
         isPermittedCreateConceptset: isPermittedCreateConceptset,
         isPermittedUpdateConceptset: isPermittedUpdateConceptset,
@@ -421,15 +470,18 @@ define(function(require, exports) {
         isPermittedCreateIR: isPermittedCreateIR,
         isPermittedEditIR: isPermittedEditIR,
         isPermittedDeleteIR: isPermittedDeleteIR,
+        isPermittedCopyIR,
 
         isPermittedReadEstimations: isPermittedReadEstimations,
         isPermittedReadEstimation: isPermittedReadEstimation,
         isPermittedCreateEstimation: isPermittedCreateEstimation,
+        isPermittedDeleteEstimation,
 
         isPermittedReadPlps: isPermittedReadPlps,
         isPermittedReadPlp: isPermittedReadPlp,
         isPermittedCreatePlp: isPermittedCreatePlp,
         isPermittedDeletePlp: isPermittedDeletePlp,
+        isPermittedCopyPlp: isPermittedCopyPlp,
 
         isPermittedSearch: isPermittedSearch,
         isPermittedViewCdmResults: isPermittedViewCdmResults,
@@ -440,6 +492,12 @@ define(function(require, exports) {
         isPermittedCreateSource: isPermittedCreateSource,
         isPermittedEditSource: isPermittedEditSource,
         isPermittedDeleteSource: isPermittedDeleteSource,
+        isPermittedCheckSourceConnection: isPermittedCheckSourceConnection,
+
+        isPermittedImportUsers,
+
+        loadUserInfo,
+        TOKEN_HEADER,
     };
 
     return api;

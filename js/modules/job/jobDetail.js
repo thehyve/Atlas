@@ -44,12 +44,24 @@ define(function (require, exports) {
 		
 		self.getStatusFromResponse = function(statusData) {
 			switch (this.type) {
+				case 'batch':
+					this.progress(statusData.progress);
+					if (this.progress() == '0') {
+						return 'STARTING';
+					} else if (this.progress() < this.progressMax) {
+						return 'RUNNING';
+					} else {
+						return 'COMPLETE';
+					}
+					break;
 				case 'cohort-generation':
 					statusData = statusData.find(j => (String(j.id.cohortDefinitionId) + String(j.id.sourceId)) == this.executionId);
 					break;
 				case 'ir-analysis':
 					statusData = statusData.find(j => (String(j.executionInfo.id.analysisId) + String(j.executionInfo.id.sourceId)) == this.executionId);
-					statusData = statusData.executionInfo;
+					if (statusData) {
+						statusData = statusData.executionInfo;
+					}
 					break;
 				case 'negative-controls':
 					statusData = statusData.find(j => (String(j.conceptSetId) + String(j.sourceId)) == this.executionId);

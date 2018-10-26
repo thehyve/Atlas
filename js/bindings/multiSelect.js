@@ -2,7 +2,6 @@ define(
   [
     'knockout',
     'bootstrap-select',
-    'css!bootstrap-select-css',
   ],
   function (ko) {
     ko.bindingHandlers.multiSelect = {
@@ -13,6 +12,10 @@ define(
 
         if (data.selectedValues) {
           data.selectedValues.subscribe(() => $(element).selectpicker('refresh'));
+        }
+
+        if (data.selectedValue) {
+            data.selectedValue.subscribe(() => $(element).selectpicker('refresh'));
         }
 
         ko.utils.domNodeDisposal.addDisposeCallback(element, function() {

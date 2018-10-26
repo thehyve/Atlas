@@ -1,4 +1,4 @@
-define(['knockout', 'text!./CohortConceptSetBrowserTemplate.html', 'vocabularyprovider', 'appConfig', 'conceptsetbuilder/InputTypes/ConceptSet', 'webapi/AuthAPI', 'webapi/MomentAPI', 'access-denied', 'databindings', 'css!./style.css'], function (ko, template, VocabularyProvider, appConfig, ConceptSet, authApi, momentApi) {
+define(['knockout', 'text!./CohortConceptSetBrowserTemplate.html', 'vocabularyprovider', 'appConfig', 'conceptsetbuilder/InputTypes/ConceptSet', 'webapi/AuthAPI', 'webapi/MomentAPI', 'components/ac-access-denied', 'databindings', 'css!./style.css'], function (ko, template, VocabularyProvider, appConfig, ConceptSet, authApi, momentApi) {
 	function CohortConceptSetBrowser(params) {
 		var self = this;
 
@@ -85,7 +85,7 @@ define(['knockout', 'text!./CohortConceptSetBrowserTemplate.html', 'vocabularypr
 		// datatable callbacks:
 
 		self.selectRepositoryConceptSet = function (data, context, event) {
-			self.onRespositoryConceptSetSelected(data, event);
+			self.onRespositoryConceptSetSelected(data, self.selectedSource(), event);
 		}
 
 		self.addConceptSet = function () {
