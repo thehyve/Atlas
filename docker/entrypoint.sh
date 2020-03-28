@@ -3,6 +3,10 @@
 set -e
 
 if [ -n "${WEBAPI_URL}" ]; then
+  if [ "${WEBAPI_URL: -1}" != "/" ]; then
+      WEBAPI_URL="$WEBAPI_URL/"
+  fi
+
   sed -i "s|http://localhost:8080/WebAPI/|$WEBAPI_URL|g" "$ATLAS_HOME/js/config-local.js"
 fi
 
