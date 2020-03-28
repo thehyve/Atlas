@@ -15,7 +15,8 @@ COPY ./js /code/js
 RUN npm run build:docker
 
 # Production Nginx image
-FROM nginx:1.17-alpine
+FROM nginxinc/nginx-unprivileged:1.17-alpine
+USER root
 
 # Directory where atlas files will be stored
 ENV ATLAS_HOME=/usr/share/nginx/html/atlas
@@ -26,20 +27,26 @@ ENV ATLAS_HOSTNAME=localhost
 
 # Configure webserver
 COPY ./docker/nginx.conf /etc/nginx/nginx.conf
+# this is required so the sed command run by the enginx user in entrypoint.sh
+# has permission to create a temp file in the /etc/nginx dir.
+RUN chown -R nginx:nginx /etc/nginx
+
 COPY ./docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Load code
-COPY ./images $ATLAS_HOME/images
-COPY ./index.html ./README.md ./LICENSE $ATLAS_HOME/
-COPY --from=builder /code/node_modules $ATLAS_HOME/node_modules
-COPY --from=builder /code/js $ATLAS_HOME/js
+WORKDIR $ATLAS_HOME
+RUN chown nginx:nginx ${ATLAS_HOME}
+COPY ./images ./images
+COPY ./index.html ./README.md ./LICENSE ./
+COPY --from=builder /code/node_modules ./node_modules
+COPY --from=builder --chown=nginx:nginx /code/js ./js
 
 # Load Atlas configuration
-COPY ./docker/config-local.js $ATLAS_HOME/js/config-local.js
+COPY --chown=nginx:nginx ./docker/config-local.js ./js/config-local.js
+
+USER nginx
 
 ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["nginx", "-g", "daemon off;"]
-
-EXPOSE 80

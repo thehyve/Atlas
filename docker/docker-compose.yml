@@ -10,7 +10,7 @@ services:
       ATLAS_HOSTNAME: ${HOSTNAME}
     labels:
       - "traefik.http.routers.atlas.rule=PathPrefix(`/atlas`)"
-      - "traefik.http.services.atlas.loadbalancer.server.port=80"
+      - "traefik.http.services.atlas.loadbalancer.server.port=8080"
 
   # WebAPI service, running Nginx to serve the Javascript files.
   webapi:
