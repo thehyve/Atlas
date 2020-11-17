@@ -90,6 +90,7 @@ jobs:
           # Allow running the image on the architectures supported by nginx-unprivileged:alpine.
           platforms: linux/amd64,linux/arm/v7,linux/arm64
           push: true
+          load: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           # Use runtime labels from docker_meta as well as fixed labels
           labels: |
