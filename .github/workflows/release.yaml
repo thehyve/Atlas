@@ -71,7 +71,7 @@ jobs:
         id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v1
         with:
-          images: ohdsi/atlas
+          images: thehyve/ohdsi-atlas
           tag-match: v(.*)
           tag-match-group: 1
 
