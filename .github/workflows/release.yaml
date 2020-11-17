@@ -39,6 +39,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      - name: Install dependencies
+        run: npm install
+
       # Compile the code
       - name: Build code
         run: npm run build:docker
@@ -94,7 +97,7 @@ jobs:
           context: ./
           file: ./Dockerfile
           # Allow running the image on the architectures supported by nginx-unprivileged:alpine.
-          platforms: linux/amd64,linux/arm/v7,linux/ppc64le,linux/s390x
+          platforms: linux/amd64,linux/arm/v7
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           # Use runtime labels from docker_meta as well as fixed labels
