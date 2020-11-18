@@ -77,6 +77,19 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
+      - name: Set build parameters
+        id: build_params
+        run: |
+          if [ ${{ github.event_name == 'pull_request' }} ]; then
+            echo "::set-output name=push::false"
+            echo "::set-output name=load::true"
+            echo "::set-output name=platforms::linux/amd64"
+          else
+            echo "::set-output name=push::true"
+            echo "::set-output name=load::false"
+            echo "::set-output name=platforms::linux/amd64,linux/arm/v7,linux/arm64"
+          fi
+
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
@@ -85,8 +98,9 @@ jobs:
           file: ./Dockerfile
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
-          push: ${{ github.event_name != 'pull_request' }}  # Push the master branch only
-          load: ${{ github.event_name == 'pull_request' }}  # Otherwise, just load it locally
+          platforms: ${{ steps.build_params.outputs.platforms }}
+          push: ${{ steps.build_params.outputs.push }}
+          load: ${{ steps.build_params.outputs.load }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           # Use runtime labels from docker_meta as well as fixed labels
           labels: |
@@ -97,7 +111,7 @@ jobs:
 
       # If the image was pushed, we need to pull it again to inspect it
       - name: Pull image
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ steps.build_params.outputs.push }}
         run: docker pull ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.version }}
 
       - name: Inspect image
